@@ -60,7 +60,7 @@ export const projectsData: Project[] = [
     description: 'A unique, OS-themed portfolio inspired by macOS and Arch Linux. It features a fully interactive, multi-window desktop environment where users can drag windows, change wallpapers, and use custom-built "apps" like a fake terminal. Built from scratch to be fast, responsive, and memorable.',
     techStack: ['Next.js', 'TypeScript', 'Tailwind CSS', 'Framer Motion', 'React Icons'],
     imageUrl: '/images/os.png', // <-- You need to take a screenshot of your finished portfolio and save it here
-    repoUrl: 'https://github.com/your-username/your-portfolio-repo', // <-- IMPORTANT: Change this to your actual GitHub repo link
-    liveUrl: 'https://your-live-portfolio-url.com', // <-- IMPORTANT: Add this after you deploy the site
+    repoUrl: 'https://github.com/DewashishCodes/portfolio-website', // <-- IMPORTANT: Change this to your actual GitHub repo link
+    liveUrl: 'https://dewashishlambore.vercel.app/', // <-- IMPORTANT: Add this after you deploy the site
   },
 ];
