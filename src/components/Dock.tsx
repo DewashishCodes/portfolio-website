@@ -3,6 +3,7 @@ import { BsFolder, BsPersonFill } from 'react-icons/bs';
 import { MdEmail } from 'react-icons/md';
 import { FaTrophy, FaBriefcase, FaFilePdf, FaTerminal } from 'react-icons/fa';
 import { IoMdSettings } from 'react-icons/io';
+import { FaFolderOpen } from 'react-icons/fa';
 
 
 type DockProps = {
@@ -19,6 +20,7 @@ const apps = [
   { id: 'terminal', name: 'Terminal', icon: <FaTerminal size={28} /> },
   { id: 'settings', name: 'Settings', icon: <IoMdSettings size={28} /> },
   // <-- Add Doom
+  { id: 'finder', name: 'Finder', icon: <FaFolderOpen size={28} /> },
   { id: 'contact', name: 'Contact', icon: <MdEmail size={28} /> },
 ];
 

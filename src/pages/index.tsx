@@ -7,6 +7,7 @@ import { AnimatePresence } from 'framer-motion';
 // --- Icon Imports ---
 import { FaFilePdf } from 'react-icons/fa';
 import { SiGithub, SiLinkedin } from 'react-icons/si'; 
+import { GiGamepad } from 'react-icons/gi';
 
 // --- Data Imports ---
 import { projectsData } from '@/data/projectsData';
@@ -20,6 +21,8 @@ import Window from '@/components/Window';
 import BootScreen from '@/components/BootScreen';
 import ProjectCard from '@/components/apps/ProjectCard';
 import TimelineItem from '@/components/apps/TimelineItem';
+import DoomWindow from '@/components/apps/DoomWindow';
+import FileExplorer from '@/components/apps/FileExplorer'; 
 
 // --- App Component Imports ---
 import Terminal from '@/components/apps/Terminal';
@@ -31,9 +34,19 @@ export default function Home() {
   const [openApps, setOpenApps] = useState<string[]>([]);
   const [wallpaper, setWallpaper] = useState('./images/wallpaper-milkyway.jpg'); // Default wallpaper
   const desktopRef = useRef<HTMLElement | null>(null);
+  const [isInitialWindow, setIsInitialWindow] = useState(true);
 
+
+  const openApp = (appId: string) => {
+    if (appId !== 'about') setIsInitialWindow(false);
+    setOpenApps(currentApps => {
+      if (!currentApps.includes(appId)) return [...currentApps, appId];
+      return [...currentApps.filter(id => id !== appId), appId];
+    });
+  };
   // --- APP & ICON DEFINITIONS ---
   const appContent: { [key: string]: React.ReactNode } = {
+    finder: <FileExplorer openApp={openApp} />,
     about: (
       <div className="flex flex-col md:flex-row items-center gap-8 p-6 overflow-y-auto h-full">
         <img 
@@ -104,13 +117,16 @@ export default function Home() {
     ),
     resume: <div className="w-full h-full"><iframe src="/resume.pdf" width="100%" height="100%" title="Resume" /></div>,
     terminal: <Terminal />,
-    settings: <Settings currentWallpaper={wallpaper} setCurrentWallpaper={setWallpaper} />,// If you ditched Tetris, remove this line
+    settings: <Settings currentWallpaper={wallpaper} setCurrentWallpaper={setWallpaper} />,
+    doom: <DoomWindow />,// If you ditched Tetris, remove this line
   };
 
   const appTitles: { [key: string]: string } = {
+    finder: "Finder", 
     about: "About Me", projects: "Projects", experience: "Experience", hackathons: "Hackathons",
     contact: "Contact", resume: "My Resume", terminal: "Terminal", settings: "System Settings",
-    tetris: "Tetris", // And this line
+    tetris: "Tetris", 
+    doom: "DOOM",// And this line
   };
 
   const desktopIcons = [
@@ -122,7 +138,8 @@ export default function Home() {
       icon: <SiLinkedin size={40} className="text-blue-500" />, // Added a nice brand color
       type: 'link',
       url: 'https://www.linkedin.com/in/dewashish-lambore-927048318/' // <-- IMPORTANT: Change this URL
-    }
+    },
+    { id: 'doom', name: 'DOOM', icon: <GiGamepad size={40} className="text-red-600" />, type: 'app' },
   ];
 
   // --- EFFECTS ---
@@ -142,12 +159,12 @@ export default function Home() {
     else if (icon.type === 'link' && icon.url) window.open(icon.url, '_blank', 'noopener,noreferrer');
   };
 
-  const openApp = (appId: string) => {
+ /*  const openApp = (appId: string) => {
     setOpenApps(currentApps => {
       if (!currentApps.includes(appId)) return [...currentApps, appId];
       return [...currentApps.filter(id => id !== appId), appId];
     });
-  };
+  }; */
 
   const closeApp = (appId: string) => setOpenApps(currentApps => currentApps.filter(id => id !== appId));
 

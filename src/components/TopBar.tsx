@@ -10,7 +10,8 @@ const appMenus: { [key: string]: string[] } = {
   about: ['About', 'Help'],
   terminal: ['Shell', 'Edit', 'View'],
   settings: ['Settings', 'View', 'Window'],
-  doom: ['Game', 'Options', 'Help'], // <-- Add menu for Settings
+  doom: ['Game', 'Options', 'Help'],
+  finder: ['File', 'Edit', 'View', 'Go', 'Window', 'Help'], // <-- Add menu for Settings
 };
 
 type TopBarProps = {
