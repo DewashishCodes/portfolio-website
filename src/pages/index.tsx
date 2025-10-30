@@ -127,14 +127,14 @@ export default function Home() {
 
   // --- EFFECTS ---
   useEffect(() => {
+  // --- CHANGE THE DURATION HERE ---
   const bootTimer = setTimeout(() => {
     setIsBooting(false);
-    // --- ADD THIS LINE ---
-    openApp('about'); // This will open the "About Me" window automatically
-  }, 4000); // This should match the duration of your boot animation
-
+    openApp('about');
+  }, 2500); // Changed from 5500 to 2500 milliseconds (2.5 seconds)
+  
   return () => clearTimeout(bootTimer);
-}, []); 
+}, []);
 
   // --- HANDLER FUNCTIONS ---
   const handleIconClick = (icon: typeof desktopIcons[0]) => {
