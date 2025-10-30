@@ -44,7 +44,7 @@ export default function Home() {
         <div className="flex-1 text-center md:text-left">
           <h3 className="text-3xl font-bold">Hello! I'm Dewashish Lambore</h3>
           <p className="mt-2 text-gray-300 leading-relaxed">
-            I'm a creative software developer with a love for building elegant,
+            I'm a creative software developer with a love for building elegant software solutions,
             I love to make products that will bring value to a user's life — simple,
             efficient, and user-friendly applications. This OS-style portfolio is a testament
             to my joy in crafting unique digital experiences.
