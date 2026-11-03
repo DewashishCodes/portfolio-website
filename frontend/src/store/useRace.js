@@ -14,6 +14,7 @@ export const useRace = create(() => ({
   dir: 1, // last scroll direction: 1 forward, -1 reverse
   scrolledAt: 0, // performance.now() of the last scroll, for the idle line
   pitLane: forcePit || location.hash === '#pitlane',
+  lightsOut: false, // first scroll after loading puts the start lights out
   goTo: null, // checkpoint to jump to when the lap view mounts
 }))
 
