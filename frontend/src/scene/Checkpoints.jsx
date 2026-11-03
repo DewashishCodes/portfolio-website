@@ -42,7 +42,7 @@ function Billboard({ cp }) {
     const tb = cp.trackT + AHEAD
     const { pos, side } = frameAt(tb)
     const outside = turnAt(tb) > 0 ? 1 : -1 // left turn -> put it on the right (outside)
-    pos.addScaledVector(side, outside * 13)
+    pos.addScaledVector(side, outside * 21) // just beyond the catch fence
     const eye = frameAt(cp.trackT).pos
     const look = new Vector3().subVectors(eye, pos)
     return { position: [pos.x, 0, pos.z], rotationY: Math.atan2(look.x, look.z), tex: labelTexture(cp.label, cp.title) }
@@ -57,12 +57,10 @@ function Billboard({ cp }) {
         <planeGeometry args={[8, 4]} />
         <meshBasicMaterial map={tex} toneMapped={false} />
       </mesh>
-      {[-3.6, 3.6].map((x) => (
-        <mesh key={x} position={[x, 1.25, 0]}>
-          <boxGeometry args={[0.25, 2.5, 0.25]} />
-          <meshStandardMaterial color="#888" />
-        </mesh>
-      ))}
+      <mesh position={[0, 1.25, 0]}>
+        <boxGeometry args={[0.35, 2.5, 0.35]} />
+        <meshStandardMaterial color="#888" />
+      </mesh>
     </group>
   )
 }
