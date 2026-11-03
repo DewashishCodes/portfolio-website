@@ -7,7 +7,7 @@ function prerender() {
   return {
     name: 'pitlane-prerender',
     async transformIndexHtml(html, ctx) {
-      const vite = ctx.server ?? (await createServer({ configFile: false, plugins: [react()], server: { middlewareMode: true, hmr: false }, appType: 'custom' }))
+      const vite = ctx.server ?? (await createServer({ configFile: false, plugins: [react()], server: { middlewareMode: true, hmr: false }, appType: 'custom', optimizeDeps: { noDiscovery: true } }))
       try {
         const { renderHead, renderBody } = await vite.ssrLoadModule('/src/pitlane/ssr.jsx')
         return html.replace('<!--head-->', renderHead()).replace('<div id="root"></div>', `<div id="root">${renderBody()}</div>`)
