@@ -1,6 +1,7 @@
 // Content blocks for each checkpoint type. Pure content: the 3D overlay (InfoPanel) and the
 // Pit Lane page both render these, so text only ever lives in content.json.
-import { useState } from 'react'
+import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
+import { useEffect, useState } from 'react'
 import content from '../content/content.json'
 import { REPOS_URL, repoKey, useLive } from '../lib/live'
 
@@ -76,21 +77,38 @@ export function Project({ cp }) {
   )
 }
 
+const STEP = { P1: 'order-2 h-24 bg-saffron text-carbon', P2: 'order-1 h-16 bg-cream/20 text-cream', P3: 'order-3 h-12 bg-[#b07a4a]/60 text-cream' }
+
+// P1/P2/P3 as podium steps (P2 left, P1 centre), then the "fastest lap" and other cards.
 function Highlights() {
+  const podium = highlights.filter((h) => STEP[h.place])
+  const rest = highlights.filter((h) => !STEP[h.place])
   return (
     <>
       <h2 className="text-2xl font-bold text-cream">Highlights</h2>
-      <ol className="mt-3 space-y-2">
-        {highlights.map((h) => (
-          <li key={h.title} className="flex gap-3 rounded-lg bg-cream/5 p-2.5">
-            <span className={`w-20 shrink-0 font-mono text-xs font-bold ${h.place === 'P1' ? 'text-saffron' : 'text-cream/70'}`}>{h.place}</span>
-            <div>
-              <h3 className="text-sm font-semibold text-cream">{h.title}</h3>
-              <p className="text-xs text-cream/70">{h.detail}</p>
-            </div>
+      <ol aria-label="Podium" className="mt-4 flex items-end gap-1.5">
+        {podium.map((h) => (
+          <li key={h.title} className={`flex flex-1 flex-col ${STEP[h.place].split(' ')[0]}`}>
+            <h3 className="mb-1.5 px-1 text-center text-xs font-semibold leading-tight text-cream">{h.title}</h3>
+            <span className={`flex justify-center rounded-t-md pt-1.5 font-mono text-lg font-bold ${STEP[h.place].split(' ').slice(1).join(' ')}`}>{h.place}</span>
           </li>
         ))}
       </ol>
+      <ul className="mt-2 space-y-1 text-xs text-cream/75">
+        {podium.map((h) => <li key={h.title}><strong className="font-mono text-cream">{h.place}</strong> {h.detail}</li>)}
+      </ul>
+      <ul className="mt-3 space-y-2">
+        {rest.map((h) => {
+          const fastest = h.place === 'FASTEST LAP'
+          return (
+            <li key={h.title} className={`rounded-lg p-2.5 ${fastest ? 'border border-[#b77cff]/50 bg-[#b77cff]/10' : 'bg-cream/5'}`}>
+              <span className={`font-mono text-[10px] font-bold tracking-widest ${fastest ? 'text-[#c9a2ff]' : 'text-cream/70'}`}>{h.place}</span>
+              <h3 className="text-sm font-semibold text-cream">{h.title}</h3>
+              {h.detail && <p className="text-xs text-cream/70">{h.detail}</p>}
+            </li>
+          )
+        })}
+      </ul>
       {otherAchievements?.length > 0 && (
         <ul className="mt-3 space-y-1 text-xs text-cream/70">
           {otherAchievements.map((a) => <li key={a}>· {a}</li>)}
@@ -137,15 +155,41 @@ export function Telemetry() {
   )
 }
 
-function Stack() {
+const PART_MS = 80
+
+// Pit stop: each stack item is a "part" the crew fits, 80 ms apart, against a stationary timer.
+function PitTimer({ total }) {
+  const t = useMotionValue(0)
+  const text = useTransform(t, (v) => `${v.toFixed(2)}s`)
+  useEffect(() => animate(t, total, { duration: total, ease: 'linear' }).stop, [t, total])
+  return <motion.span className="font-mono text-sm font-bold tabular-nums text-saffron">{text}</motion.span>
+}
+
+function Stack({ flat }) {
+  const groups = Object.entries(stack)
+  const total = (groups.flatMap(([, items]) => items).length * PART_MS + 300) / 1000
+  let n = 0
   return (
     <>
-      <h2 className="text-2xl font-bold text-cream">Tech stack + agentic stack</h2>
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-2xl font-bold text-cream">Tech stack + agentic stack</h2>
+        {!flat && <span aria-hidden="true" className="shrink-0 font-mono text-[10px] tracking-widest text-cream/60">STATIONARY <PitTimer total={total} /></span>}
+      </div>
       <div className="mt-3 space-y-3">
-        {Object.entries(stack).map(([group, items]) => (
+        {groups.map(([group, items]) => (
           <div key={group}>
             <h3 className="mb-1 font-mono text-[11px] tracking-[0.2em] text-saffron">{group.toUpperCase()}</h3>
-            <Tags items={items} />
+            {flat ? <Tags items={items} /> : (
+              <ul className="flex flex-wrap gap-1.5">
+                {items.map((t) => (
+                  <motion.li key={t} className="rounded bg-cream/10 px-2 py-0.5 text-xs text-cream/85"
+                    initial={{ opacity: 0, y: -12, scale: 0.7 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ delay: (n++ * PART_MS) / 1000, type: 'spring', stiffness: 500, damping: 22 }}>
+                    {t}
+                  </motion.li>
+                ))}
+              </ul>
+            )}
           </div>
         ))}
       </div>
