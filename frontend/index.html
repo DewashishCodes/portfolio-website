@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <title>Dewashish Lambore · DL Grand Prix</title>
-    <meta name="description" content="Founder of Yap and AI engineer building agents, memory systems and products people use. Take a lap through my work." />
+    <!--head-->
+    <script>
+      // Hide the baked Pit Lane while the 3D lap loads; reduced-motion visitors and #pitlane keep it.
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches && location.hash !== '#pitlane') document.documentElement.classList.add('lap')
+    </script>
+    <style>.lap [data-ssr] { display: none }</style>
   </head>
   <body>
     <div id="root"></div>
