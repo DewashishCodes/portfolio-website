@@ -1,6 +1,8 @@
 // Content blocks for each checkpoint type. Pure content: the 3D overlay (InfoPanel) and the
 // Pit Lane page both render these, so text only ever lives in content.json.
+import { useState } from 'react'
 import content from '../content/content.json'
+import { REPOS_URL, repoKey, useLive } from '../lib/live'
 
 const { profile, highlights, github, stack, research, socials, bestPosts, education, experience, certifications, otherAchievements, contact } = content
 
@@ -19,7 +21,7 @@ const Tags = ({ items }) => (
   </ul>
 )
 
-function Profile() {
+function Profile({ flat }) {
   const fp = profile.featuredProduct
   return (
     <>
@@ -46,12 +48,14 @@ function Profile() {
       <div className="mt-4 flex flex-wrap gap-2">
         <Btn href={profile.resumeUrl}>Resume</Btn>
       </div>
-      <p className="mt-3 font-mono text-xs text-cream/60">Scroll to start the lap ↓</p>
+      {!flat && <p className="mt-3 font-mono text-xs text-cream/60">Scroll to start the lap ↓</p>}
     </>
   )
 }
 
-export function Project({ cp, stars = cp.stars }) {
+export function Project({ cp }) {
+  const live = useLive(REPOS_URL)?.[cp.repoUrl && repoKey(cp.repoUrl)]
+  const stars = live?.stars ?? cp.stars
   return (
     <>
       <h2 className="text-2xl font-bold text-cream">{cp.title}</h2>
@@ -96,9 +100,26 @@ function Highlights() {
   )
 }
 
-// Phase 4 swaps the fallback numbers for live GitHub data and adds the heatmap.
-export function Telemetry({ stats = github.fallback, children }) {
+const heat = (n) => (n === 0 ? 'bg-cream/10' : n < 3 ? 'bg-saffron/35' : n < 6 ? 'bg-saffron/65' : 'bg-saffron')
+
+function Heatmap({ weeks }) {
+  return (
+    <div className="mt-3 flex gap-[2px] overflow-hidden" role="img" aria-label="Contribution heatmap, last 12 months">
+      {weeks.slice(-26).map((w) => (
+        <div key={w[0].date} className="flex flex-col gap-[2px]">
+          {w.map((d) => <span key={d.date} title={`${d.count} on ${d.date}`} className={`size-[9px] rounded-[2px] ${heat(d.count)}`} />)}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Live numbers from the backend; content.json fallback when it is down or has no token.
+export function Telemetry() {
+  const live = useLive('/api/github/contributions')
+  const stats = live ?? github.fallback
   const tiles = [['PUBLIC REPOS', stats.publicRepos], ['TOTAL STARS', stats.totalStars], ['FOLLOWERS', stats.followers]]
+  if (live) tiles.push(['CONTRIBUTIONS · 1Y', live.total], ['CURRENT STREAK', `${live.currentStreak}d`], ['LONGEST STREAK', `${live.longestStreak}d`])
   return (
     <>
       <h2 className="text-2xl font-bold text-cream">GitHub telemetry</h2>
@@ -110,7 +131,7 @@ export function Telemetry({ stats = github.fallback, children }) {
           </div>
         ))}
       </dl>
-      {children}
+      {live && <><Heatmap weeks={live.weeks} /><p className="mt-1 font-mono text-[10px] text-cream/50">LAST 26 WEEKS</p></>}
       <div className="mt-4"><Btn href={`https://github.com/${github.username}`} primary>@{github.username}</Btn></div>
     </>
   )
@@ -216,20 +237,51 @@ const linkFor = {
   x: () => socials.find((s) => s.platform === 'X'),
 }
 
-// Phase 4 replaces the mailto buttons with the contact form.
-export function Contact({ onCta }) {
+const field = 'w-full rounded-md border border-cream/20 bg-carbon/60 px-3 py-2 text-sm text-cream placeholder:text-cream/40 focus:border-saffron focus:outline-none'
+
+function ContactForm() {
+  const [type, setType] = useState(contact.ctas[0].intent)
+  const [state, setState] = useState('idle') // idle | sending | sent | error message
+  async function submit(e) {
+    e.preventDefault()
+    setState('sending')
+    const body = { ...Object.fromEntries(new FormData(e.currentTarget)), type }
+    try {
+      const r = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      setState(r.ok ? 'sent' : r.status === 429 ? 'Too many messages, try again in an hour.' : r.status === 422 ? 'Check the email and message (5+ characters).' : 'error')
+    } catch { setState('error') }
+  }
+  if (state === 'sent') return <p role="status" className="mt-4 rounded-lg border border-saffron/40 bg-saffron/5 p-3 text-sm text-cream">Copy that. Message received, I'll radio back soon.</p>
+  const err = state !== 'idle' && state !== 'sending' && (state === 'error' ? <>Couldn't send. Email me directly at <a className="underline" href={`mailto:${contact.email}`}>{contact.email}</a>.</> : state)
+  return (
+    <form onSubmit={submit} className="mt-4 space-y-2">
+      <div role="radiogroup" aria-label="I am" className="flex flex-wrap gap-2">
+        {[...contact.ctas, { label: 'Just saying hi', intent: 'other' }].map((c) => (
+          <button key={c.intent} type="button" role="radio" aria-checked={type === c.intent} onClick={() => setType(c.intent)}
+            className={`rounded-md px-3 py-1.5 font-mono text-xs tracking-wider ${type === c.intent ? 'bg-saffron text-carbon' : 'border border-cream/25 text-cream hover:border-saffron'}`}>
+            {c.label}
+          </button>
+        ))}
+      </div>
+      <label className="block"><span className="sr-only">Name</span><input name="name" required maxLength={100} placeholder="Name" autoComplete="name" className={field} /></label>
+      <label className="block"><span className="sr-only">Email</span><input name="email" type="email" required maxLength={200} placeholder="Email" autoComplete="email" className={field} /></label>
+      <label className="block"><span className="sr-only">Message</span><textarea name="message" required minLength={5} maxLength={4000} rows={4} placeholder="Message" className={field} /></label>
+      {/* honeypot: hidden from people and screen readers, bots fill it */}
+      <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
+      {err && <p role="alert" className="text-xs text-saffron">{err}</p>}
+      <button disabled={state === 'sending'} className="rounded-md bg-saffron px-4 py-2 font-mono text-xs tracking-wider text-carbon hover:bg-cream disabled:opacity-60">
+        {state === 'sending' ? 'TRANSMITTING…' : 'SEND ON TEAM RADIO'}
+      </button>
+    </form>
+  )
+}
+
+export function Contact() {
   return (
     <>
       <h2 className="text-2xl font-bold text-cream">{contact.headline}</h2>
       <p className="mt-1 text-cream/80">{contact.subline}</p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {contact.ctas.map((c) => (
-          <Btn key={c.intent} primary href={onCta ? undefined : `mailto:${contact.email}?subject=${encodeURIComponent(c.label)}`}
-            onClick={onCta && ((e) => { e.preventDefault(); onCta(c.intent) })} role={onCta ? 'button' : undefined}>
-            {c.label}
-          </Btn>
-        ))}
-      </div>
+      <ContactForm />
       <ul className="mt-4 space-y-1 text-sm">
         <li><a className="text-cream underline decoration-cream/30 hover:text-saffron" href={`mailto:${contact.email}`}>{contact.email}</a></li>
         <li className="flex flex-wrap gap-2 pt-1">
