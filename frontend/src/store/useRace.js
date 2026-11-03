@@ -7,7 +7,7 @@ export const useRace = create(() => ({
   speed: 0,
   active: 0,
   lapMs: 0,
-  quality: 'high',
+  quality: new URLSearchParams(location.search).get('q') ?? 'high', // high | medium | low; auto-selection comes in Phase 5
   soundOn: false,
 }))
 
