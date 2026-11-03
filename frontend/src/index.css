@@ -1,0 +1,23 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-cream: #f2e8d5;
+  --color-saffron: #e86a1f;
+  --color-rosso: #c4161c;
+  --color-carbon: #151515;
+}
+
+html,
+body {
+  margin: 0;
+  background: #151515;
+  color: #f2e8d5;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.hud-glass {
+  background: rgba(21, 21, 21, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(242, 232, 213, 0.12);
+  border-radius: 10px;
+}
