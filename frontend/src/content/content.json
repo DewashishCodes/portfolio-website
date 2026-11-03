@@ -63,6 +63,7 @@
       "id": "grid",
       "type": "profile",
       "trackT": 0.02,
+      "camera": "chase",
       "label": "GRID",
       "title": "Dewashish Lambore",
       "mascot": {
@@ -76,6 +77,7 @@
       "id": "t1",
       "type": "project",
       "trackT": 0.1,
+      "camera": { "shot": "trackside", "ahead": -18, "lateral": 10 },
       "label": "T1",
       "title": "Agent Office",
       "pitch": "A dev team of Claude Code agents you run from your phone. You give the order; they plan, build, review and test it as pull requests; you tap merge.",
@@ -108,6 +110,7 @@
       "id": "t2",
       "type": "project",
       "trackT": 0.17,
+      "camera": "cockpit",
       "label": "T2",
       "title": "Dolphin",
       "pitch": "Open-source persistent memory for LLM apps and AI agents: vector search plus a knowledge graph.",
@@ -140,6 +143,7 @@
       "id": "t3",
       "type": "project",
       "trackT": 0.24,
+      "camera": "chase",
       "label": "T3",
       "title": "Tokenmeter",
       "pitch": "A local-first Windows dashboard for Claude Code usage: tokens, costs, cache savings and activity, fully offline.",
@@ -171,6 +175,7 @@
       "id": "t4",
       "type": "project",
       "trackT": 0.31,
+      "camera": "onboard-rear",
       "label": "T4",
       "title": "Janus",
       "pitch": "An AI revenue-recovery agent for failed payments, broken mandates and overdue B2B invoices. Razorpay Buildathon, Track 03.",
@@ -203,6 +208,7 @@
       "id": "t5",
       "type": "project",
       "trackT": 0.38,
+      "camera": { "shot": "trackside", "ahead": 14, "lateral": 9, "side": -1, "height": 1.1 },
       "label": "T5",
       "title": "Multimodal RAG · HackRx 6.0",
       "pitch": "Answers questions over 800+ page documents in under 18 seconds. Top 180 of 46,178 participants.",
@@ -234,6 +240,7 @@
       "id": "podium",
       "type": "highlights",
       "trackT": 0.45,
+      "camera": { "shot": "heli", "ahead": 24, "radius": 28, "height": 9, "angle": 3.75 },
       "label": "PODIUM",
       "title": "Highlights",
       "mascot": {
@@ -247,6 +254,7 @@
       "id": "telemetry",
       "type": "github",
       "trackT": 0.52,
+      "camera": { "shot": "trackside", "ahead": -12, "lateral": 11, "side": -1, "height": 2 },
       "label": "TELEMETRY",
       "title": "GitHub telemetry",
       "mascot": {
@@ -259,6 +267,7 @@
       "id": "pitstop",
       "type": "stack",
       "trackT": 0.6,
+      "camera": { "shot": "heli", "ahead": 18, "radius": 28, "height": 10, "angle": 2.3 },
       "label": "PIT STOP",
       "title": "Tech stack + agentic stack",
       "mascot": {
@@ -272,6 +281,7 @@
       "id": "research",
       "type": "research",
       "trackT": 0.68,
+      "camera": "cockpit",
       "label": "WIND TUNNEL",
       "title": "Research",
       "mascot": {
@@ -284,6 +294,7 @@
       "id": "fanzone",
       "type": "socials",
       "trackT": 0.76,
+      "camera": "chase",
       "label": "FAN ZONE",
       "title": "I build in public",
       "mascot": {
@@ -297,6 +308,7 @@
       "id": "paddock",
       "type": "education",
       "trackT": 0.85,
+      "camera": { "shot": "trackside", "ahead": -20, "lateral": 10 },
       "label": "PADDOCK",
       "title": "Team HQ",
       "mascot": {
@@ -309,6 +321,7 @@
       "id": "finish",
       "type": "contact",
       "trackT": 0.97,
+      "camera": { "shot": "heli", "ahead": 30, "radius": 30, "height": 11, "angle": 3.6 },
       "label": "FINISH",
       "title": "Let's build something fast.",
       "mascot": {
@@ -420,7 +433,7 @@
     "fallback": {
       "publicRepos": 55,
       "followers": 16,
-      "totalStars": 28
+      "totalStars": 53
     }
   },
   "stack": {
