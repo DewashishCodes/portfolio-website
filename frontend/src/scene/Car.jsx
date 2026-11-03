@@ -123,8 +123,8 @@ export default function Car() {
     // Road buzz: a hair of pitch jitter that grows with speed.
     camera.rotateX((Math.random() - 0.5) * 0.0016 * (speed / 340))
 
-    // Narrow FOV when braking into a checkpoint, wide on the straights.
-    st.fov = MathUtils.damp(st.fov, 65 + 10 * Math.min(1, speed / 220), 3, dt)
+    // Narrow FOV when braking into a checkpoint, wide on the straights; portrait screens start at 85° so the track stays in view.
+    st.fov = MathUtils.damp(st.fov, (camera.aspect < 1 ? 85 : 65) + 10 * Math.min(1, speed / 220), 3, dt)
     if (Math.abs(camera.fov - st.fov) > 0.01) {
       camera.fov = st.fov
       camera.updateProjectionMatrix()
