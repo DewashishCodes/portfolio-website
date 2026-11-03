@@ -1,10 +1,12 @@
 import { useGLTF } from '@react-three/drei'
-import { createPortal, useFrame, useThree } from '@react-three/fiber'
-import { useEffect, useMemo, useRef } from 'react'
-import { CanvasTexture, Group, MathUtils, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, Quaternion, SRGBColorSpace, Vector3 } from 'three'
+import { useFrame, useThree } from '@react-three/fiber'
+import { useMemo, useRef } from 'react'
+import { Box3, CanvasTexture, Group, MathUtils, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, Quaternion, SRGBColorSpace, Vector3 } from 'three'
+import content from '../content/content.json'
 import { mapProgress } from '../lib/scrollMap'
 import { frameAt, TRACK_LENGTH, turnAt } from '../lib/trackSpline'
 import { useRace } from '../store/useRace'
+import { kerbAt, poseCamera, rig, shotFor, speedFov } from './rig'
 
 // Model space: Y up, nose toward +Z, 1 unit = 0.0148 m (RootNode cm x Sketchfab 1.48).
 const SCALE = 0.8 // the model is ~25% oversize (2.5 m wide); 0.8 gives a real ~2 m car
@@ -12,12 +14,15 @@ const U = 0.0148 * SCALE
 const WHEEL = new Vector3(0, 62.86, 50.4) // steering wheel centre, model units
 const TYRE_R = 26.1 * U
 const RIDE = 9.17 * U // tyre bottom above model origin
-// PRD says 0.55 m behind / 0.32 m above; 0.13 m above keeps the halo hoop at the top of the frame instead of mid-screen.
-const EYE = new Vector3(0, WHEEL.y * U + 0.13, WHEEL.z * U - 0.5)
-const EYE_HEIGHT = EYE.y - RIDE
+// 0.13 m above the wheel keeps the halo hoop at the top of the frame instead of mid-screen.
+const EYE = new Vector3(0, WHEEL.y * U + 0.13 - RIDE, WHEEL.z * U - 0.5) // car local, origin on the road
+rig.eye.copy(EYE)
 
 const LOOK_AHEAD = 0.004
 const MAX_ROLL = MathUtils.degToRad(4)
+const READOUT_FLOOR = 40 // km/h shown while the visitor is scrolling, so a dwell never reads as parked
+const CUT_BLACK = 0.09 // s of black before the new shot appears
+const CUT_HOLD = 0.7 // s a shot must hold before the next cut, so dithering on a dwell edge cannot strobe
 const X = new Vector3(1, 0, 0)
 const Y = new Vector3(0, 1, 0)
 const _look = new Vector3()
@@ -27,7 +32,7 @@ const _q2 = new Quaternion()
 const gear = (kmh) => (kmh < 2 ? 'N' : String(Math.min(8, 1 + Math.floor(kmh / 42))))
 const lapStr = (ms) => `${Math.floor(ms / 60000)}:${String(Math.floor((ms % 60000) / 1000)).padStart(2, '0')}`
 
-function useCockpit() {
+function useCar() {
   const { scene } = useGLTF('/models/car.glb')
   return useMemo(() => {
     const root = scene.getObjectByName('RootNode')
@@ -38,6 +43,7 @@ function useCockpit() {
       if (o.name.startsWith('Tire')) o.material = rubber
     })
     scene.updateMatrixWorld(true)
+    rig.nose = new Box3().setFromObject(scene).max.z * SCALE
 
     const front = root.children.filter((n) => /^(Tire|Rim)/.test(n.name) && n.position.z > 0)
     const wheels = front.map((n) => ({ node: n, base: n.quaternion.clone() }))
@@ -91,20 +97,53 @@ function drawDash({ ctx, tex }, speed, lapMs) {
   tex.needsUpdate = true
 }
 
+// Soft dark ellipse under the car: the contact shadow on every tier, including Low where shadow maps are off.
+function blobTexture() {
+  const c = document.createElement('canvas')
+  c.width = c.height = 128
+  const g = c.getContext('2d')
+  const grad = g.createRadialGradient(64, 64, 8, 64, 64, 64)
+  grad.addColorStop(0, 'rgba(0,0,0,0.75)')
+  grad.addColorStop(0.55, 'rgba(0,0,0,0.45)')
+  grad.addColorStop(1, 'rgba(0,0,0,0)')
+  g.fillStyle = grad
+  g.fillRect(0, 0, 128, 128)
+  return new CanvasTexture(c)
+}
+
+// Driver helmet in the livery, only seen from outside the car.
+function Helmet({ visible }) {
+  const { colors } = content.livery
+  return (
+    <group position={[0, EYE.y - 0.06, EYE.z - 0.12]} visible={visible}>
+      <mesh castShadow>
+        <sphereGeometry args={[0.15, 20, 14]} />
+        <meshStandardMaterial color={colors.body ?? '#C4161C'} roughness={0.25} metalness={0.2} />
+      </mesh>
+      <mesh rotation-x={Math.PI / 2} position={[0, 0.02, 0]}>
+        <torusGeometry args={[0.152, 0.018, 8, 24]} />
+        <meshStandardMaterial color={colors.accent ?? '#E86A1F'} roughness={0.4} />
+      </mesh>
+      <mesh position={[0, 0.0, 0.09]} scale={[1, 0.45, 0.7]}>
+        <sphereGeometry args={[0.13, 16, 10]} />
+        <meshStandardMaterial color="#0a0a0c" roughness={0.05} metalness={0.6} />
+      </mesh>
+    </group>
+  )
+}
+
 export default function Car() {
   const camera = useThree((s) => s.camera)
-  const scene = useThree((s) => s.scene)
-  const car = useCockpit()
-  const st = useRef({ t: null, roll: 0, fov: 75, spin: 0, dashAt: 0 }).current
-
-  useEffect(() => {
-    scene.add(camera) // the cockpit is portalled into the camera, so the camera must be in the scene
-    return () => scene.remove(camera)
-  }, [scene, camera])
+  const car = useCar()
+  const body = useRef()
+  const blob = useMemo(blobTexture, [])
+  const st = useRef({ t: null, roll: 0, fov: 60, spin: 0, dashAt: 0, look: new Vector3(), shot: null, cutAt: -9, pending: null, film: 0, outside: true }).current
+  const helmet = useRef()
 
   useFrame((state, dt) => {
     dt = Math.min(dt, 0.05)
-    const { progress, active, lapMs } = useRace.getState()
+    const time = state.clock.elapsedTime
+    const { progress, active, lapMs, lightsOut, scrolledAt } = useRace.getState()
     const target = mapProgress(progress).t
     const prev = st.t ?? target
     st.t = MathUtils.damp(prev, target, 4, dt)
@@ -114,21 +153,20 @@ export default function Car() {
     const speed = 340 * (1 - Math.exp(-(ms * 3.6) / 250)) // soft cap at 340 km/h
     const k = turnAt(st.t)
 
+    // Car body: on the road, nose toward the look-ahead point, a little lean into the corner.
     const { pos } = frameAt(st.t)
-    camera.position.set(pos.x, EYE_HEIGHT, pos.z)
     frameAt(st.t + LOOK_AHEAD, _look)
-    camera.lookAt(_look.x, EYE_HEIGHT + 0.1, _look.z)
     st.roll = MathUtils.damp(st.roll, MathUtils.clamp(k * 3, -MAX_ROLL, MAX_ROLL), 3, dt)
-    camera.rotateZ(st.roll)
-    // Road buzz: a hair of pitch jitter that grows with speed.
-    camera.rotateX((Math.random() - 0.5) * 0.0016 * (speed / 340))
-
-    // Narrow FOV when braking into a checkpoint, wide on the straights; portrait screens start at 85° so the track stays in view.
-    st.fov = MathUtils.damp(st.fov, (camera.aspect < 1 ? 85 : 65) + 10 * Math.min(1, speed / 220), 3, dt)
-    if (Math.abs(camera.fov - st.fov) > 0.01) {
-      camera.fov = st.fov
-      camera.updateProjectionMatrix()
-    }
+    const g = body.current
+    g.position.set(pos.x, 0, pos.z)
+    g.rotation.set(0, Math.atan2(_look.x - pos.x, _look.z - pos.z), -st.roll * 0.4, 'YXZ')
+    g.updateMatrixWorld()
+    rig.car.position.copy(g.position)
+    rig.car.quaternion.copy(g.quaternion)
+    rig.car.updateMatrixWorld()
+    rig.t = st.t
+    rig.speed = speed
+    rig.kerb = kerbAt(st.t)
 
     const steer = MathUtils.clamp(k * 12, -0.35, 0.35)
     car.pivot.rotation.z = -steer * 4 // wheel turns ~4x the road-wheel angle
@@ -137,23 +175,77 @@ export default function Car() {
     _q2.setFromAxisAngle(X, st.spin)
     for (const w of car.wheels) w.node.quaternion.copy(_q1).multiply(_q2).multiply(w.base)
 
-    const moving = speed > 1
-    const next = { t: st.t, speed: moving ? speed : 0, lapMs: lapMs + (moving ? dt * 1000 : 0) }
+    // Camera: hold the current shot, cut (never lerp) to a new one through a few frames of black.
+    const want = shotFor(active)
+    const cut = document.getElementById('cut')
+    if (!st.shot) st.shot = want
+    else if (!st.pending && want.key !== st.shot.key && time - st.cutAt > CUT_HOLD) {
+      st.pending = want
+      st.cutAt = time
+      if (cut) cut.style.opacity = '1'
+    }
+    let snap = !st.posed
+    if (st.pending && time - st.cutAt >= CUT_BLACK) {
+      st.shotAt = time
+      st.shot = st.pending
+      st.pending = null
+      snap = true
+      if (cut) cut.style.opacity = '0'
+    }
+    st.posed = true
+    rig.shot = st.shot.shot
+    const base = poseCamera(camera, st.shot, st, time - (st.shotAt ?? 0), dt, snap) // time since the cut, so orbits start where framed
+
+    // Speed feel: wider FOV with speed, shake that grows with speed and spikes on kerbs.
+    const sp = Math.min(1, speed / 220)
+    const portrait = camera.aspect < 1 ? 22 : 0
+    st.fov = snap ? base + portrait : MathUtils.damp(st.fov, base + portrait + speedFov(st.shot.shot) * sp, 3, dt)
+    const mounted = st.shot.shot === 'cockpit' || st.shot.shot === 'onboard-rear' || st.shot.shot === 'chase'
+    const shake = (mounted ? 1 : 0.15) * (speed / 340) * (0.0012 + rig.kerb * 0.0045)
+    camera.rotateX((Math.random() - 0.5) * shake + Math.sin(time * 23) * shake * 0.4)
+    camera.rotateY(Math.sin(time * 17.3) * shake * 0.3)
+
+    // Panel open on a wide screen: slide the frame so the subject sits in the space left of it.
+    const panel = active >= 0 && innerWidth >= 640 && camera.aspect >= 1 && st.shot.shot !== 'cockpit'
+    const frac = panel ? 218 / innerWidth : 0
+    const film = 70 * frac * Math.tan(MathUtils.degToRad(st.fov) * camera.aspect / 2)
+    st.film = snap ? film : MathUtils.damp(st.film, film, 4, dt)
+    if (Math.abs(camera.fov - st.fov) > 0.01 || Math.abs(camera.filmOffset - st.film) > 0.001) {
+      camera.fov = st.fov
+      camera.filmOffset = st.film
+      camera.updateProjectionMatrix()
+    }
+
+    const outside = st.shot.shot !== 'cockpit'
+    if (outside !== st.outside) {
+      st.outside = outside
+      helmet.current.visible = outside
+    }
+
+    const scrolling = lightsOut && performance.now() - scrolledAt < 1200
+    const readout = scrolling ? Math.max(READOUT_FLOOR, speed) : speed > 1 ? speed : 0
+    const next = { t: st.t, speed: readout, lapMs: lapMs + (speed > 1 ? dt * 1000 : 0) }
     const a = mapProgress(progress).active
     if (a !== active) next.active = a
     useRace.setState(next)
 
-    if (state.clock.elapsedTime - st.dashAt > 0.1) {
-      st.dashAt = state.clock.elapsedTime
-      drawDash(car.dash, next.speed, next.lapMs)
+    if (time - st.dashAt > 0.1) {
+      st.dashAt = time
+      drawDash(car.dash, readout, next.lapMs)
     }
   })
 
-  return createPortal(
-    <group position={[-EYE.x, -EYE.y, EYE.z]} rotation-y={Math.PI} scale={SCALE}>
-      <primitive object={car.scene} />
-    </group>,
-    camera,
+  return (
+    <group ref={body}>
+      <group position-y={-RIDE} scale={SCALE}>
+        <primitive object={car.scene} />
+      </group>
+      <group ref={helmet}><Helmet visible /></group>
+      <mesh rotation-x={-Math.PI / 2} position-y={0.03} renderOrder={1}>
+        <planeGeometry args={[2.6, 6.2]} />
+        <meshBasicMaterial map={blob} transparent depthWrite={false} toneMapped={false} polygonOffset polygonOffsetFactor={-2} />
+      </mesh>
+    </group>
   )
 }
 
