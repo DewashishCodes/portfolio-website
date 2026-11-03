@@ -43,4 +43,15 @@ export function frameAt(t, pos = new Vector3(), tan = new Vector3(), side = new 
   return { pos, tan, side }
 }
 
+// +1 if the outside of the bend at t is the driver's right, -1 if left.
+export const outsideSign = (t) => (turnAt(t) > 0 ? 1 : -1)
+
+// World placement at track position t, `lateral` metres to the driver's right.
+// rotY points local +z along the direction of travel; local -x is the driver's right.
+export function place(t, lateral = 0) {
+  const { pos, tan, side } = frameAt(t)
+  pos.addScaledVector(side, lateral)
+  return { position: [pos.x, 0, pos.z], rotY: Math.atan2(tan.x, tan.z) }
+}
+
 export { wrap }
