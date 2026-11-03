@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import { Color, Object3D, Vector3 } from 'three'
 import { spline } from '../lib/trackSpline'
+import { useRace } from '../store/useRace'
 import { usePBR } from './Track'
 
 export const FOG = '#d9a77c'
@@ -63,17 +64,21 @@ function Instanced({ count, place, colored, children, ...props }) {
 }
 export { Instanced }
 
+const TREES = { high: 1400, medium: 800, low: 450 }
+
 function Trees() {
+  const quality = useRace((s) => s.quality)
+  const n = TREES[quality]
   const spots = useMemo(() => {
     const r = rng(11)
     const out = []
-    while (out.length < 1400) {
+    while (out.length < n) {
       const x = center.x + (r() - 0.5) * 1800
       const z = center.z + (r() - 0.5) * 1600
       if (!nearTrack(x, z, 32)) out.push([x, z, 0.7 + r() * 0.8, r()])
     }
     return out
-  }, [])
+  }, [n])
   const crown = useMemo(() => (i, o, c) => {
     const [x, z, s, h] = spots[i]
     o.position.set(x, 3.2 * s + 3 * s, z)
@@ -91,10 +96,12 @@ function Trees() {
         <coneGeometry args={[2.6, 7, 7]} />
         <meshStandardMaterial roughness={0.95} />
       </Instanced>
-      <Instanced count={spots.length} place={trunk}>
-        <cylinderGeometry args={[0.25, 0.35, 3.2, 5]} />
-        <meshStandardMaterial color="#4a3526" roughness={1} />
-      </Instanced>
+      {quality !== 'low' && ( // Low tier: crowns only
+        <Instanced count={spots.length} place={trunk}>
+          <cylinderGeometry args={[0.25, 0.35, 3.2, 5]} />
+          <meshStandardMaterial color="#4a3526" roughness={1} />
+        </Instanced>
+      )}
     </>
   )
 }
