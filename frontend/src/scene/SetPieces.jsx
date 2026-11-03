@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { CanvasTexture, NearestFilter, RepeatWrapping, SRGBColorSpace } from 'three'
 import content from '../content/content.json'
+import { useRace } from '../store/useRace'
 import { outsideSign, place, TRACK_LENGTH, ROAD_WIDTH } from '../lib/trackSpline'
 import { Instanced, rng } from './Environment'
 
@@ -87,6 +88,7 @@ function GridSlots() {
 }
 
 function Grandstand({ rows = 8, length = 44 }) {
+  const showCrowd = useRace((s) => s.quality) !== 'low' // Low tier: empty stands
   const crowd = useMemo(() => {
     const r = rng(rows * length)
     const per = Math.floor(length / 0.8)
@@ -105,10 +107,12 @@ function Grandstand({ rows = 8, length = 44 }) {
       ))}
       <Box args={[rows * 1.2 + 1, 0.3, length + 2]} position={[-(rows * 0.6), 0.8 * rows + 4, 0]} color={colors.carbon} />
       <Box args={[0.2, 0.9, length]} position={[0.2, 0.45, 0]} color={colors.accent} />
-      <Instanced count={rows * Math.floor(length / 0.8)} place={crowd} colored>
-        <boxGeometry args={[0.45, 0.9, 0.5]} />
-        <meshStandardMaterial roughness={0.9} />
-      </Instanced>
+      {showCrowd && (
+        <Instanced count={rows * Math.floor(length / 0.8)} place={crowd} colored>
+          <boxGeometry args={[0.45, 0.9, 0.5]} />
+          <meshStandardMaterial roughness={0.9} />
+        </Instanced>
+      )}
     </group>
   )
 }
