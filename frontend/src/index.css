@@ -46,3 +46,29 @@ body {
     backdrop-filter: blur(14px);
   }
 }
+
+/* Speed lines: thin conic streaks, masked to the edges of the frame, flickering as they rotate. */
+.speed-lines {
+  background: repeating-conic-gradient(from 0deg at 50% 52%, rgba(255, 244, 228, 0.55) 0deg 0.35deg, transparent 0.35deg 3.1deg, rgba(255, 244, 228, 0.3) 3.1deg 3.3deg, transparent 3.3deg 7deg);
+  mask-image: radial-gradient(ellipse 70% 62% at 50% 52%, transparent 55%, #000 100%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 62% at 50% 52%, transparent 55%, #000 100%);
+  animation: speed-lines 0.18s steps(3) infinite;
+  mix-blend-mode: screen;
+}
+@keyframes speed-lines {
+  to {
+    transform: rotate(2.2deg) scale(1.04);
+  }
+}
+
+/* Camera cut: a few frames of black between shots, F1-TV style. Opacity is set from the render loop. */
+#cut {
+  background: #000;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .speed-lines {
+    display: none;
+  }
+}
