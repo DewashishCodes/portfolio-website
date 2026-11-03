@@ -1,24 +1,33 @@
 import { Canvas } from '@react-three/fiber'
+import { Suspense } from 'react'
+import { useRace } from '../store/useRace'
 import Car from './Car'
 import Checkpoints from './Checkpoints'
+import Effects from './Effects'
+import Environment from './Environment'
+import SetPieces from './SetPieces'
 import Track from './Track'
 
 export default function Experience() {
+  const quality = useRace((s) => s.quality)
   return (
     <Canvas
       className="!fixed inset-0"
       aria-hidden="true"
-      camera={{ fov: 75, near: 0.1, far: 3000 }}
-      dpr={[1, 2]}
-      shadows
+      camera={{ fov: 75, near: 0.05, far: 6000 }}
+      dpr={quality === 'high' ? [1, 2] : quality === 'medium' ? 1.25 : 1}
+      gl={{ antialias: quality === 'low', powerPreference: 'high-performance' }}
+      shadows={quality === 'high' ? 'soft' : quality === 'medium'}
+      onCreated={(s) => import.meta.env.DEV && (window.__three = s)}
     >
-      <color attach="background" args={['#c9b8a0']} />
-      <fog attach="fog" args={['#c9b8a0', 150, 1400]} />
-      <hemisphereLight args={['#fff1dc', '#5b6650', 0.9]} />
-      <directionalLight position={[-300, 200, 200]} intensity={1.6} color="#ffd9a8" />
-      <Track />
-      <Checkpoints />
-      <Car />
+      <Suspense fallback={null}>
+        <Environment />
+        <Track />
+        <SetPieces />
+        <Checkpoints />
+        <Car />
+        {quality !== 'low' && <Effects full={quality === 'high'} />}
+      </Suspense>
     </Canvas>
   )
 }
