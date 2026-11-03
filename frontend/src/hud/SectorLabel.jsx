@@ -5,7 +5,7 @@ export default function SectorLabel() {
   const active = useRace((s) => s.active)
   const cp = checkpoints[active]
   return (
-    <div aria-live="polite" className="fixed top-4 left-1/2 -translate-x-1/2 text-center">
+    <div aria-live="polite" className="fixed top-4 left-1/2 hidden -translate-x-1/2 text-center sm:block">
       {cp && (
         <div className="hud-glass px-5 py-1.5 font-mono text-sm tracking-[0.2em] text-cream">
           <span className="text-saffron">{cp.label}</span>
