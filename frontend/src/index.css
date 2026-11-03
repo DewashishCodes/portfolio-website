@@ -21,3 +21,28 @@ body {
   border: 1px solid rgba(242, 232, 213, 0.12);
   border-radius: 10px;
 }
+
+.radio-bar {
+  height: 3px;
+  animation: radio-bar 0.5s ease-in-out infinite alternate;
+}
+@keyframes radio-bar {
+  to {
+    height: 12px;
+  }
+}
+
+/* Info panels: near-solid so body text stays above 4.5:1 over any part of the scene. */
+.panel-glass {
+  background: rgba(16, 16, 18, 0.9);
+  border: 1px solid rgba(242, 232, 213, 0.14);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(232, 106, 31, 0.6) transparent;
+}
+@supports (backdrop-filter: blur(1px)) {
+  .panel-glass {
+    background: rgba(16, 16, 18, 0.82);
+    backdrop-filter: blur(14px);
+  }
+}
