@@ -603,7 +603,8 @@
   "seo": {
     "title": "Dewashish Lambore · DL Grand Prix",
     "description": "Founder of Yap and AI engineer building agents, memory systems and products people use. Take a lap through my work.",
-    "ogImage": "/og.png"
+    "ogImage": "/og.png",
+    "url": ""
   },
   "experience": [
     {
