@@ -1,10 +1,12 @@
 import Lenis from 'lenis'
 import { useEffect } from 'react'
 import Controls from './hud/Controls'
+import Loader from './hud/Loader'
 import LapTimer from './hud/LapTimer'
 import Minimap from './hud/Minimap'
 import RadioPanel from './hud/RadioPanel'
 import SectorLabel from './hud/SectorLabel'
+import SpeedLines from './hud/SpeedLines'
 import { checkpointProgress, checkpoints, SCROLL_UNITS } from './lib/scrollMap'
 import { forcePit } from './lib/quality'
 import InfoPanel from './panels/InfoPanel'
@@ -38,7 +40,7 @@ function Lap() {
     scroller.lenis = lenis
     if (import.meta.env.DEV) window.__lenis = lenis
     lenis.on('scroll', (e) =>
-      useRace.setState({ progress: e.progress, dir: e.direction || useRace.getState().dir, scrolledAt: performance.now() }),
+      useRace.setState({ progress: e.progress, dir: e.direction || useRace.getState().dir, scrolledAt: performance.now(), ...(e.progress > 0.002 && { lightsOut: true }) }),
     )
     const { goTo } = useRace.getState()
     if (goTo != null) requestAnimationFrame(() => lenis.scrollTo(checkpointProgress(goTo) * lenis.limit, { immediate: true }))
@@ -57,6 +59,8 @@ function Lap() {
         Skip to content (Pit Lane)
       </a>
       <Experience />
+      <div id="cut" className="pointer-events-none fixed inset-0" aria-hidden="true" />
+      <SpeedLines />
       {/* Tall spacer: native scroll is the throttle. */}
       <div style={{ height: `${(SCROLL_UNITS + 1) * 100}vh` }} />
       <SectorLabel />
@@ -65,6 +69,7 @@ function Lap() {
       <Controls />
       <InfoPanel />
       <RadioPanel />
+      <Loader />
     </>
   )
 }
