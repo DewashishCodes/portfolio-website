@@ -13,6 +13,14 @@ export function usePath() {
   return path
 }
 
+/** Scroll to #hash once the new page is in the DOM, or to the top. */
+export function scrollToTarget(hash = location.hash.slice(1)) {
+  requestAnimationFrame(() => {
+    const el = hash && document.getElementById(hash)
+    el ? el.scrollIntoView({ behavior: 'smooth' }) : scrollTo(0, 0)
+  })
+}
+
 export function Link({ to, ...props }) {
   const go = (e) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return
@@ -21,9 +29,7 @@ export function Link({ to, ...props }) {
     if (path !== location.pathname) {
       history.pushState(null, '', to)
       dispatchEvent(new PopStateEvent('popstate'))
-    }
-    // Wait one frame so the new page has rendered before scrolling.
-    requestAnimationFrame(() => (hash ? document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' }) : scrollTo(0, 0)))
+    } else scrollToTarget(hash) // same page: no transition will run, so scroll now
   }
   return <a href={to} onClick={go} {...props} />
 }
