@@ -62,6 +62,8 @@
     {
       "id": "grid",
       "type": "profile",
+      "layout": "profile",
+      "board": { "big": "#07", "small": "DL GRAND PRIX" },
       "trackT": 0.02,
       "camera": "chase",
       "label": "GRID",
@@ -76,6 +78,8 @@
     {
       "id": "t1",
       "type": "project",
+      "layout": "media",
+      "panelSide": "right",
       "trackT": 0.1,
       "camera": { "shot": "trackside", "ahead": -18, "lateral": 10 },
       "label": "T1",
@@ -109,6 +113,8 @@
     {
       "id": "t2",
       "type": "project",
+      "layout": "media",
+      "panelSide": "left",
       "trackT": 0.17,
       "camera": "cockpit",
       "label": "T2",
@@ -142,6 +148,8 @@
     {
       "id": "t3",
       "type": "project",
+      "layout": "media",
+      "panelSide": "right",
       "trackT": 0.24,
       "camera": "chase",
       "label": "T3",
@@ -174,6 +182,8 @@
     {
       "id": "t4",
       "type": "project",
+      "layout": "media",
+      "panelSide": "left",
       "trackT": 0.31,
       "camera": "onboard-rear",
       "label": "T4",
@@ -207,6 +217,8 @@
     {
       "id": "t5",
       "type": "project",
+      "layout": "media",
+      "panelSide": "right",
       "trackT": 0.38,
       "camera": { "shot": "trackside", "ahead": 14, "lateral": 9, "side": -1, "height": 1.1 },
       "label": "T5",
@@ -239,6 +251,8 @@
     {
       "id": "podium",
       "type": "highlights",
+      "layout": "podium",
+      "board": { "big": "P2", "small": "OUT OF 600+ TEAMS" },
       "trackT": 0.45,
       "camera": { "shot": "heli", "ahead": 24, "radius": 28, "height": 9, "angle": 3.75 },
       "label": "PODIUM",
@@ -253,6 +267,8 @@
     {
       "id": "telemetry",
       "type": "github",
+      "layout": "telemetry",
+      "board": { "big": "SHIP DAILY", "small": "GITHUB \u00b7 DEWASHISHCODES" },
       "trackT": 0.52,
       "camera": { "shot": "trackside", "ahead": -12, "lateral": 11, "side": -1, "height": 2 },
       "label": "TELEMETRY",
@@ -266,8 +282,11 @@
     {
       "id": "pitstop",
       "type": "stack",
+      "layout": "pitstop",
+      "board": { "big": "BOX BOX", "small": "PIT STOP \u00b7 TECH STACK" },
+      "stop": true,
       "trackT": 0.6,
-      "camera": { "shot": "heli", "ahead": 18, "radius": 28, "height": 10, "angle": 2.3 },
+      "camera": { "shot": "heli", "ahead": 6, "radius": 24, "height": 9, "angle": 2.3 },
       "label": "PIT STOP",
       "title": "Tech stack + agentic stack",
       "mascot": {
@@ -280,6 +299,8 @@
     {
       "id": "research",
       "type": "research",
+      "layout": "research",
+      "board": { "big": "IEEE IES 2026", "small": "PUBLISHED RESEARCH" },
       "trackT": 0.68,
       "camera": "cockpit",
       "label": "WIND TUNNEL",
@@ -293,6 +314,8 @@
     {
       "id": "fanzone",
       "type": "socials",
+      "layout": "social",
+      "board": { "big": "@DEWASHISH.AI", "small": "BUILD IN PUBLIC" },
       "trackT": 0.76,
       "camera": "chase",
       "label": "FAN ZONE",
@@ -307,6 +330,8 @@
     {
       "id": "paddock",
       "type": "education",
+      "layout": "hq",
+      "board": { "big": "SIT PUNE", "small": "TEAM HQ" },
       "trackT": 0.85,
       "camera": { "shot": "trackside", "ahead": -20, "lateral": 10 },
       "label": "PADDOCK",
@@ -321,6 +346,8 @@
       "id": "finish",
       "panelLabel": "POST-RACE INTERVIEW",
       "type": "contact",
+      "layout": "contact",
+      "board": { "big": "THANKS FOR RACING", "small": "RADIO ME BELOW" },
       "trackT": 0.97,
       "camera": { "shot": "heli", "ahead": 30, "radius": 30, "height": 11, "angle": 3.6 },
       "label": "FINISH",
