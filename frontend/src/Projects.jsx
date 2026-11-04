@@ -26,10 +26,14 @@ function Row({ p }) {
   return (
     <li className="row isolate border-b border-line py-[22px]">
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-        {/* The title link stretches over the whole row; the external links sit above it. */}
-        <Link to={`/projects/${p.slug}`} className="row-title flex items-center gap-2.5 after:absolute after:inset-0 after:content-['']">
-          <AppIcon p={p} />
-          <h3 className="h3">{p.title}</h3>
+        {/* The title link's ::after stretches over the whole row; the external links sit above it.
+            The hover slide lives on the inner span: a transform on the link itself would make it
+            the containing block and shrink the overlay back to the title. */}
+        <Link to={`/projects/${p.slug}`} className="after:absolute after:inset-0 after:content-['']">
+          <span className="row-title flex items-center gap-2.5">
+            <AppIcon p={p} />
+            <h3 className="h3">{p.title}</h3>
+          </span>
         </Link>
         <Status p={p} />
         <div className="relative z-10 ml-auto flex gap-4 text-[13.5px] text-muted">
