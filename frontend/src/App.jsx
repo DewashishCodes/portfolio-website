@@ -1,129 +1,81 @@
-import Lenis from 'lenis'
-import { useEffect } from 'react'
-import Confetti from './hud/Confetti'
-import Controls from './hud/Controls'
-import FinishBanner from './hud/FinishBanner'
-import Lights, { skipStart } from './hud/Lights'
-import TimingTower from './hud/TimingTower'
-import { watchAchievements } from './lib/achievements'
-import { drsDelta, listenDrs } from './lib/drs'
-import { trackValidity } from './lib/lap'
-import Loader from './hud/Loader'
-import LapTimer from './hud/LapTimer'
-import Minimap from './hud/Minimap'
-import RadioPanel from './hud/RadioPanel'
-import SpeedLines from './hud/SpeedLines'
-import { checkpointProgress, checkpoints, scrollUnits } from './lib/scrollMap'
-import { forcePit } from './lib/quality'
-import InfoPanel from './panels/InfoPanel'
-import PitLane from './pitlane/PitLane'
-import Experience from './scene/Experience'
-import { closePitLane, openPitLane, scroller, useRace } from './store/useRace'
+import { useEffect, useState } from 'react'
+import content from './content/content.json'
+import About from './pages/About'
+import Home from './pages/Home'
+import Work from './pages/Work'
+import { Icons, Link, usePath } from './ui'
 
-const typing = (el) => el.closest?.('input, textarea, select, [contenteditable="true"]')
+const { profile, socials, seo } = content
+const social = Object.fromEntries(socials.map((s) => [s.platform, s.url]))
+const PAGES = { '/': [Home], '/projects': [Work, 'Work'], '/about': [About, 'About'] }
 
-// Arrow keys / PageUp / PageDown hop checkpoint to checkpoint; Home / End jump to the ends.
-function jump(e) {
-  const { lenis } = scroller
-  if (!lenis || typing(e.target) || e.target.closest?.('[data-lenis-prevent]')) return
-  const p = useRace.getState().progress
-  const stops = checkpoints.map((_, i) => checkpointProgress(i))
-  const eps = 0.002
-  const next = { ArrowDown: 1, ArrowRight: 1, PageDown: 1, ArrowUp: -1, ArrowLeft: -1, PageUp: -1 }[e.key]
-  let i
-  if (next === 1) i = stops.findIndex((s) => s > p + eps)
-  else if (next === -1) i = stops.findLastIndex((s) => s < p - eps)
-  else if (e.key === 'Home') i = 0
-  else if (e.key === 'End') i = stops.length - 1
-  else return
-  e.preventDefault()
-  if (i >= 0) lenis.scrollTo(stops[i] * lenis.limit)
+function ThemeToggle() {
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'))
+  const toggle = () => {
+    const d = document.documentElement.classList.toggle('dark')
+    try { localStorage.theme = d ? 'dark' : 'light' } catch {}
+    setDark(d)
+  }
+  return (
+    <button onClick={toggle} aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'} className={`grid size-8 place-items-center rounded-[8px] text-muted transition-colors hover:text-ink ${dark ? 'bg-chip text-ink' : ''}`}>
+      {dark ? Icons.sun : Icons.moon}
+    </button>
+  )
 }
 
-const LERP = 0.1
-const FINISH_LERP = 0.035 // heavier scroll smoothing in the finish dwell: the car crosses the line in slow motion
-
-function Lap() {
-  const started = useRace((s) => s.start === 'go')
-  useRace((s) => s.tyre) // the spacer height depends on the tyre's dwell length
-
-  useEffect(() => {
-    history.scrollRestoration = 'manual' // a restored scroll would skip the grid and the start lights
-    const { goTo, start } = useRace.getState()
-    if (!goTo && start !== 'go') window.scrollTo(0, 0)
-    const lenis = new Lenis({ autoRaf: true, syncTouch: true, lerp: LERP, virtualScroll: drsDelta })
-    scroller.lenis = lenis
-    if (import.meta.env.DEV) window.__lenis = lenis
-    lenis.on('scroll', (e) =>
-      useRace.setState({ progress: e.progress, dir: e.direction || useRace.getState().dir, scrolledAt: performance.now() }),
-    )
-    if (goTo || (goTo === 0 && start === 'go')) {
-      skipStart() // back from the Pit Lane mid-lap: drop straight in, no second start
-      requestAnimationFrame(() => lenis.scrollTo(checkpointProgress(goTo) * lenis.limit, { immediate: true }))
-    } else if (useRace.getState().start !== 'go') lenis.stop() // Lights.jsx starts it at lights out
-    const last = checkpoints.length - 1
-    const unsubValid = trackValidity()
-    const stopDrs = listenDrs()
-    const stopAch = watchAchievements()
-    const unsub = useRace.subscribe((s, prev) => {
-      if (s.active !== prev.active) lenis.options.lerp = s.active === last ? FINISH_LERP : LERP
-    })
-    window.addEventListener('keydown', jump)
-    return () => {
-      window.removeEventListener('keydown', jump)
-      unsub()
-      unsubValid()
-      stopDrs()
-      stopAch()
-      lenis.destroy()
-      scroller.lenis = null
-    }
-  }, [])
-
+function Header({ path }) {
+  const nav = [['/projects', 'Work'], ['/about', 'About']]
+  const item = 'rounded-[7px] px-2 py-1 transition-colors hover:text-ink'
   return (
-    <>
-      <a href="#pitlane" onClick={(e) => { e.preventDefault(); openPitLane() }}
-        className="sr-only z-50 focus:not-sr-only focus:fixed focus:top-4 focus:left-1/2 focus:-translate-x-1/2 focus:rounded-md focus:bg-saffron focus:px-4 focus:py-2 focus:font-mono focus:text-xs focus:text-carbon">
-        Skip to content (Pit Lane)
-      </a>
-      <Experience />
-      <div id="cut" className="pointer-events-none fixed inset-0" aria-hidden="true" />
-      <SpeedLines />
-      {/* Tall spacer: native scroll is the throttle. */}
-      <div style={{ height: `${(scrollUnits() + 1) * 100}vh` }} />
-      {/* Before lights out only the minimap and the nav show; the HUD arrives with the start. */}
-      {started && <LapTimer />}
-      <Minimap />
-      <Controls />
-      {started && <InfoPanel />}
-      {started && <RadioPanel />}
-      <Lights />
-      <FinishBanner />
-      <TimingTower />
-      <Confetti />
-      <Loader />
-    </>
+    <header className="sticky top-0 z-20 -mx-5 flex h-[60px] items-center gap-2 border-b border-line bg-col/80 px-5 backdrop-blur-[12px] backdrop-saturate-[1.4] sm:-mx-10 sm:px-10">
+      <Link to="/" className="mr-3 flex items-center gap-2.5 text-[15px] font-medium text-ink">
+        <img src={profile.avatar} alt="" width="24" height="24" className="size-6 rounded-[6px] border border-line bg-chip object-cover" />
+        <span className="max-[380px]:hidden">{profile.name}</span>
+      </Link>
+      <nav className="flex items-center text-[15px] text-muted">
+        {nav.map(([to, label]) => (
+          <Link key={to} to={to} aria-current={path === to ? 'page' : undefined} className={`${item} ${path === to ? 'bg-chip text-ink' : ''}`}>{label}</Link>
+        ))}
+        <a href={profile.resumeUrl} target="_blank" rel="noreferrer" className={`${item} max-sm:hidden`}>Resume</a>
+      </nav>
+      <div className="ml-auto flex items-center gap-1 text-muted">
+        <a href={social.GitHub} target="_blank" rel="noreferrer" aria-label="GitHub" className="grid size-8 place-items-center transition-colors hover:text-ink">{Icons.github}</a>
+        <a href={social.X} target="_blank" rel="noreferrer" aria-label="X" className="grid size-8 place-items-center transition-colors hover:text-ink">{Icons.x}</a>
+        <span className="mx-1.5 h-4 w-px bg-line" />
+        <ThemeToggle />
+      </div>
+    </header>
+  )
+}
+
+function Footer() {
+  return (
+    <footer className="mt-20 border-t border-dashed border-line pt-7 pb-10 text-[14px]">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-muted">
+        {socials.map((s) => <a key={s.platform} href={s.url} target="_blank" rel="noreferrer" className="transition-colors hover:text-ink">{s.platform}</a>)}
+        <a href="#top" onClick={(e) => (e.preventDefault(), scrollTo({ top: 0, behavior: 'smooth' }))} className="ml-auto transition-colors hover:text-ink">Back to top</a>
+      </div>
+      <p className="meta mt-5">Designed and built by {profile.name.split(' ')[0]}.</p>
+      <p className="meta mt-2 flex items-center gap-2">
+        <span className="size-1.5 rounded-full bg-green-500" />
+        Last updated · {__BUILD_DATE__}
+      </p>
+    </footer>
   )
 }
 
 export default function App() {
-  const pitLane = useRace((s) => s.pitLane)
+  const path = usePath()
+  const [Page, title] = PAGES[path.replace(/\/$/, '') || '/'] ?? PAGES['/']
+  useEffect(() => { document.title = title ? `${title} · ${profile.name}` : seo.title }, [title])
 
-  useEffect(() => {
-    document.documentElement.classList.remove('lap') // React owns the page from here
-    const onKey = (e) => {
-      if (typing(e.target) || e.ctrlKey || e.metaKey || e.altKey) return
-      if (e.key === 'p' || e.key === 'P') useRace.getState().pitLane ? closePitLane() : openPitLane()
-      else if (e.key === 'Escape' && useRace.getState().pitLane) closePitLane()
-    }
-    const onHash = () => location.hash === '#pitlane' && openPitLane()
-    window.addEventListener('keydown', onKey)
-    window.addEventListener('hashchange', onHash)
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      window.removeEventListener('hashchange', onHash)
-    }
-  }, [])
-
-  return pitLane ? <PitLane onExit={forcePit ? undefined : closePitLane} onTrack={forcePit ? undefined : closePitLane} /> : <Lap />
+  return (
+    <div id="top" className="mx-auto min-h-screen max-w-[766px] bg-col px-5 sm:border-x sm:border-line sm:px-10">
+      <Header path={path} />
+      <main key={path}>
+        <Page />
+      </main>
+      <Footer />
+    </div>
+  )
 }
