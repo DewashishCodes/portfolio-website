@@ -18,12 +18,13 @@ const FINISH_AT = 0.9 // where in the finish dwell a jump lands: past the line, 
 
 const segs = []
 let u = 0
+const creep = (cp) => (cp.stop ? 0 : CREEP) // a "stop" checkpoint (the pit box) holds the car dead still
 checkpoints.forEach((cp, i) => {
   if (i > 0) {
-    segs.push({ type: 'travel', u0: u, u1: u + TRAVEL, t0: checkpoints[i - 1].trackT + CREEP, t1: cp.trackT - CREEP })
+    segs.push({ type: 'travel', u0: u, u1: u + TRAVEL, t0: checkpoints[i - 1].trackT + creep(checkpoints[i - 1]), t1: cp.trackT - creep(cp) })
     u += TRAVEL
   }
-  segs.push({ type: 'dwell', i, u0: u, u1: u + DWELL, t0: cp.trackT - CREEP, t1: i === last ? FINISH_T + RUN_OUT : cp.trackT + CREEP })
+  segs.push({ type: 'dwell', i, u0: u, u1: u + DWELL, t0: cp.trackT - creep(cp), t1: i === last ? FINISH_T + RUN_OUT : cp.trackT + creep(cp) })
   u += DWELL
 })
 
