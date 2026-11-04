@@ -174,6 +174,8 @@ Each milestone is independently shippable and has a definition of done. Order is
 3. Timing tower. On Finish, before the contact panel, show an F1-style timing tower: top 10 plus the visitor's own row highlighted with their position. Three-letter initials input, Enter to submit.
 4. Lap validity. A lap only counts if the visitor passed through every dwell zone (`active` reached every index). Skipping via keyboard Home/End or the minimap invalidates the lap and the HUD shows "LAP INVALID" in yellow, like track limits.
 
+**Status (2026-11-04, session 4).** Built. Checked in Chrome by driving the real modules (the automation tab is too slow to run a timed lap): validity, sector colours, finish hand-off, tower, submit, ghost row placement among other visitors' laps, LAP INVALID HUD. Backend self-check covers validation, ranking, ties and the rate limit. Not yet raced end to end on a normal-speed browser.
+
 **Done when.** Two people racing the site on two machines can see each other on the tower.
 
 ### Milestone 5: Race mechanics (DRS, tyres, collectibles, achievements)
@@ -304,3 +306,24 @@ Resume with:
 3. Unverified: phone layouts (bottom sheet and full-width radio against the minimap), the live heatmap on the pit wall screen (the backend was not running), podium confetti timing in a normal tab.
 
 Gotcha: the Chrome automation tab runs at about 0.5 fps, so after a jump the car takes ~40 s to catch up there. Judge framing only after waiting.
+
+### 2026-11-04 (session 4): Milestone 4 built
+
+Backend (`backend/main.py`, SQLite at `backend/data/laps.db`, gitignored):
+- `POST /api/lap` with `{initials, ms, sectors?, tyre, reaction?, jump}`. Initials are three letters or digits, upper-cased. Laps under 8 s are rejected; sectors must add up to the lap within 1.5 s. 10 submissions per hour per IP (the contact rate limiter is now a shared `rate_limit(bucket, ip, n)`). Returns `{id, position, total}`; ties go to whoever set the time first.
+- `GET /api/laps` returns the top 20 and the total; with `?ms=` it also returns where that time would place.
+- `test_main.py` covers it. Run with `.venv/Scripts/python test_main.py`.
+
+Frontend:
+- `lib/lap.js`: sector lines at trackT 0.33 and 0.66, S3 ends at the finish line. `completeSector(lapMs)` is called by `Car.jsx` on each crossing and colours it: purple for a personal best, green if faster than the previous lap, yellow otherwise, grey when the lap is invalid. Personal bests (`best`, `last`, `lap`) live in localStorage `dl-gp-bests`; only valid laps update them. `trackValidity()` marks the lap invalid as soon as the car enters a checkpoint while an earlier one was never held for 250 ms. That catches End, minimap jumps across several checkpoints, and flicks that fly through one. Opening the Pit Lane mid-lap also invalidates.
+- `hud/LapTimer.jsx`: sector bars take the sector colour, the last sector flashes for 3 s, INVALID tag and a LAP INVALID strip.
+- `hud/TimingTower.jsx`: after the chequered banner (banner sets `tower`, the tower sets `interview`). Top 10 with gaps to the leader, the visitor's unsubmitted time as a ghost "YOU" row at its would-be position (or below a gap if outside the top 10), their sectors and personal best, initials input (remembered in localStorage), Enter submits, then "ON THE BOARD · P3 OF 12". Invalid laps can see the board but not submit. If the backend is down it says so and still lets them continue.
+- Untimed laps (joined from the Pit Lane) skip the tower and go straight to the interview.
+
+Dev: run the backend with `.venv/Scripts/python -m uvicorn main:app --port 8000` from `backend/`; Vite proxies `/api` to it. Testing in the console: import the app's own module instances (their URLs carry a `?t=` stamp after HMR; find them with `performance.getEntriesByType('resource')`), or you get a second, disconnected store.
+
+Resume with:
+1. Race one full lap end to end in a normal browser (not the automation tab) to see the sector flashes at real speed, and race it twice to see green sectors.
+2. Before deploying: `client_ip` uses the socket address; behind a proxy it must read the trusted X-Forwarded-For, or every visitor shares one rate limit.
+3. Then milestone 5 (DRS, tyre choice, collectibles, achievements, night race). Tyre choice will start sending a real `tyre` with the lap.
+4. Still open: heat haze, phone layouts.
