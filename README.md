@@ -15,32 +15,27 @@ My personal site: a calm, single-column portfolio showing what I've built, how I
 | Part | Tech |
 | --- | --- |
 | Frontend | Vite 6, React 18, Tailwind CSS v4, framer-motion |
-| Backend | FastAPI + httpx (GitHub GraphQL proxy), SQLite (visitor counter) |
+| Backend | Cloudflare Pages Functions (GitHub GraphQL proxy), D1 (visitor counter, 6 h GitHub cache) |
 | Content | One file: `frontend/src/content/content.json` |
 
 ## Run locally
 
 ```bash
-# backend (port 8000)
-cd backend
-python -m venv .venv && .venv/Scripts/activate   # macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --port 8000
-
-# frontend (port 5173, proxies /api to the backend)
 cd frontend
 npm install
-npm run dev
+npm run build && npm run api   # Pages Functions + D1 on :8788
+npm run dev                    # site on :5173, proxies /api to :8788
 ```
 
-The site works without the backend: the GitHub graph, star counts and visitor counter just hide.
+The first time, create the local database with `npx wrangler d1 execute portfolio --file schema.sql --local`.
 
-### Environment (`backend/.env`)
+The site works without the API: the GitHub graph, star counts and visitor counter just hide.
 
-| Variable | Purpose |
-| --- | --- |
-| `GITHUB_TOKEN` | Read-only token for the contributions graph and repo stats |
-| `TRUSTED_PROXY_HOPS` | Number of reverse proxies in front of the API, for per-IP rate limits (default `0`) |
+### Secrets
+
+| Where | Variable | Purpose |
+| --- | --- | --- |
+| `frontend/.dev.vars` (local) and Pages secrets (production) | `GITHUB_TOKEN` | Read-only token for the contributions graph and repo stats |
 
 ## Editing content
 
@@ -54,11 +49,21 @@ Everything shown on the site (projects, experience, socials, toolkit, the "Now" 
 | `GET /api/github/repos?names=owner/repo,...` | Stars, forks, language, last push |
 | `POST /api/visit` / `GET /api/visits` | Visitor counter |
 
-Tests: `cd backend && python test_main.py`
+Code: `frontend/functions/api/*` (routes), `frontend/server/lib.js` (shared helpers), `frontend/schema.sql` (D1 tables). Tests: `npm test`.
 
 ## Deploying
 
-`npm run build` writes a static site to `frontend/dist`. The host must serve `index.html` for unknown paths (SPA fallback) so links like `/projects/yap` work.
+Hosted on Cloudflare Pages (project `dewashish-portfolio`, D1 database `portfolio`):
+
+```bash
+cd frontend
+npx wrangler login        # once
+npm run deploy            # build + upload
+npx wrangler pages secret put GITHUB_TOKEN --project-name dewashish-portfolio   # once
+npx wrangler d1 execute portfolio --file schema.sql --remote                     # once, or after schema changes
+```
+
+Pages serves `index.html` for unknown paths, so links like `/projects/yap` work.
 
 ## Credits
 
