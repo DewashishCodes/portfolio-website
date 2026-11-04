@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react'
 import content from './content/content.json'
 import About from './pages/About'
 import Home from './pages/Home'
+import Resume from './pages/Resume'
 import Work from './pages/Work'
 import { Icons, Link, usePath } from './ui'
 
 const { profile, socials, seo } = content
 const social = Object.fromEntries(socials.map((s) => [s.platform, s.url]))
-const PAGES = { '/': [Home], '/projects': [Work, 'Work'], '/about': [About, 'About'] }
+const PAGES = { '/': [Home], '/projects': [Work, 'Work'], '/about': [About, 'About'], '/resume': [Resume, 'Resume'] }
 
 function ThemeToggle() {
   const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'))
@@ -24,23 +25,24 @@ function ThemeToggle() {
 }
 
 function Header({ path }) {
-  const nav = [['/projects', 'Work'], ['/about', 'About']]
+  const nav = [['/projects', 'Work'], ['/about', 'About'], ['/resume', 'Resume']]
+  const iconLink = 'pop grid size-8 place-items-center hover:text-ink'
   const item = 'rounded-[7px] px-2 py-1 transition-colors hover:text-ink'
   return (
     <header className="sticky top-0 z-20 -mx-5 flex h-[60px] items-center gap-2 border-b border-line bg-col/80 px-5 backdrop-blur-[12px] backdrop-saturate-[1.4] sm:-mx-10 sm:px-10">
       <Link to="/" className="mr-3 flex items-center gap-2.5 text-[15px] font-medium text-ink">
         <img src={profile.avatar} alt="" width="24" height="24" className="size-6 rounded-[6px] border border-line bg-chip object-cover" />
-        <span className="max-[380px]:hidden">{profile.name}</span>
+        <span className="max-sm:hidden">{profile.name}</span>
       </Link>
       <nav className="flex items-center text-[15px] text-muted">
         {nav.map(([to, label]) => (
           <Link key={to} to={to} aria-current={path === to ? 'page' : undefined} className={`${item} ${path === to ? 'bg-chip text-ink' : ''}`}>{label}</Link>
         ))}
-        <a href={profile.resumeUrl} target="_blank" rel="noreferrer" className={`${item} max-sm:hidden`}>Resume</a>
       </nav>
-      <div className="ml-auto flex items-center gap-1 text-muted">
-        <a href={social.GitHub} target="_blank" rel="noreferrer" aria-label="GitHub" className="grid size-8 place-items-center transition-colors hover:text-ink">{Icons.github}</a>
-        <a href={social.X} target="_blank" rel="noreferrer" aria-label="X" className="grid size-8 place-items-center transition-colors hover:text-ink">{Icons.x}</a>
+      <div className="ml-auto flex items-center gap-0.5 text-muted">
+        <a href={social.GitHub} target="_blank" rel="noreferrer" aria-label="GitHub" className={iconLink}>{Icons.github}</a>
+        <a href={social.Instagram} target="_blank" rel="noreferrer" aria-label="Instagram" className={iconLink}>{Icons.instagram}</a>
+        <a href={social.X} target="_blank" rel="noreferrer" aria-label="X" className={`${iconLink} max-[420px]:hidden`}>{Icons.x}</a>
         <span className="mx-1.5 h-4 w-px bg-line" />
         <ThemeToggle />
       </div>
