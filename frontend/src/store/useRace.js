@@ -22,7 +22,11 @@ export const useRace = create(() => ({
   reaction: null, // ms from lights out to the visitor's first scroll
   jumpStart: false, // scrolled while the lights were on (cosmetic penalty)
   finishedAt: 0, // performance.now() the car crossed the finish line
-  interview: false, // finish banner done, the contact panel may open
+  tower: false, // finish banner done, the timing tower is up
+  interview: false, // timing tower dismissed, the contact panel may open
+  sectors: [], // completed sectors this lap: { ms, color }
+  sectorFlash: null, // last sector crossed, for the HUD flash: { i, ms, color, at }
+  invalid: false, // skipped a checkpoint: the lap cannot go on the leaderboard
   cue: null, // transient radio line { line, outfit, expression, at }, wins over the checkpoint line
   confetti: 0, // bump to fire a confetti burst
   goTo: null, // checkpoint to jump to when the lap view mounts
@@ -37,7 +41,9 @@ export const scroller = { lenis: null }
 
 export function openPitLane() {
   if (useRace.getState().pitLane) return
-  useRace.setState({ pitLane: true, goTo: useRace.getState().active })
+  const s = useRace.getState()
+  // Leaving the track mid-lap is a shortcut: the lap can no longer be classified.
+  useRace.setState({ pitLane: true, goTo: s.active, ...(s.lightsOutAt && !s.finishedAt && { invalid: true }) })
   history.replaceState(null, '', '#pitlane')
   window.scrollTo(0, 0)
 }
