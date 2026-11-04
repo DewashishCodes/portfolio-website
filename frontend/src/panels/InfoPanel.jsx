@@ -29,6 +29,7 @@ function useWidth() {
 export default function InfoPanel() {
   const active = useRace((s) => s.active)
   const interview = useRace((s) => s.interview)
+  const tyre = useRace((s) => s.tyre)
   const width = useWidth()
   const cp = checkpoints[active]
   // The finish panel waits for the car to cross the line and the lap time to hold the screen.
@@ -51,7 +52,7 @@ export default function InfoPanel() {
         >
           <Label>{cp.panelLabel ?? cp.label}</Label>
           <div className="mt-1">
-            <Section cp={cp} />
+            <Section cp={cp} tyre={tyre} />
           </div>
         </motion.article>
       )}
