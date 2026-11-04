@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import content from '../content/content.json'
 import { setSound } from '../lib/audio'
 import { maxTier, TIERS } from '../lib/quality'
+import { BOARD_COUNT } from '../lib/achievements'
 import { Credits } from '../panels/sections'
 import { openPitLane, useRace } from '../store/useRace'
 
@@ -15,6 +16,7 @@ function Settings() {
   const soundOn = useRace((s) => s.soundOn)
   const quality = useRace((s) => s.quality)
   const auto = useRace((s) => s.qualityAuto)
+  const night = useRace((s) => s.night)
   const sound = (on) => {
     setSound(on)
     useRace.setState({ soundOn: on })
@@ -50,6 +52,13 @@ function Settings() {
             </div>
           </fieldset>
           <fieldset>
+            <legend className="mb-1.5 font-mono text-[10px] tracking-[0.2em] text-cream/60">SESSION</legend>
+            <div className="flex gap-1.5">
+              <button type="button" className={opt(!night)} aria-pressed={!night} onClick={() => useRace.setState({ night: false })}>DAY</button>
+              <button type="button" className={opt(night)} aria-pressed={night} onClick={() => useRace.setState({ night: true })}>NIGHT</button>
+            </div>
+          </fieldset>
+          <fieldset>
             <legend className="mb-1.5 font-mono text-[10px] tracking-[0.2em] text-cream/60">GRAPHICS</legend>
             <div className="flex flex-wrap gap-1.5">
               <button type="button" className={opt(auto)} aria-pressed={auto} onClick={() => setQuality('auto')}>AUTO</button>
@@ -69,13 +78,24 @@ function Settings() {
 }
 
 export default function Controls() {
+  const boards = useRace((s) => s.boards)
+  const full = boards === BOARD_COUNT
   return (
     <div className="fixed top-4 left-4 z-10 flex flex-wrap gap-2">
       <button type="button" onClick={openPitLane} className={hud} aria-keyshortcuts="P">
         PIT LANE <kbd className="ml-1 hidden text-cream/50 sm:inline">P</kbd>
       </button>
-      <a href={content.profile.resumeUrl} target="_blank" rel="noreferrer" className={hud}>RESUME</a>
+      <a href={content.profile.resumeUrl} target="_blank" rel="noreferrer" className={`${hud} ${full ? 'flex items-center gap-2' : ''}`}>
+        RESUME
+        {full && <span className="chequer inline-block h-3 w-5" title="Full lap: every hidden board found" />}
+        {full && <span className="sr-only">(full lap stamp)</span>}
+      </a>
       <Settings />
+      {boards > 0 && !full && (
+        <span className="hud-glass flex items-center px-3 font-mono text-[11px] tracking-[0.2em] text-saffron" title="Hidden pit boards found">
+          BOARDS {boards}/{BOARD_COUNT}
+        </span>
+      )}
     </div>
   )
 }
