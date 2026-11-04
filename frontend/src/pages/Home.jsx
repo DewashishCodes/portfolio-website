@@ -1,10 +1,10 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import content from '../content/content.json'
-import GitHubSnake from '../GitHubSnake'
+import GitHubGraph from '../GitHubGraph'
 import { useLive } from '../live'
 import { ProjectList, ViewToggle } from '../Projects'
-import { Chip, Ext, Icons, Link, Reveal, Section, SideLink } from '../ui'
+import { Chip, Icons, Link, Reveal, Section, SideLink, ToolLogo } from '../ui'
 
 const { profile, intro, projects, experience, highlights, contact, github } = content
 const byTitle = Object.fromEntries(projects.map((p) => [p.title, p]))
@@ -53,7 +53,7 @@ export function EmailCopy({ big }) {
   return (
     <span className="inline-flex items-center gap-2">
       <a href={`mailto:${contact.email}`} className={`link ${big ? 'text-[17px]' : 'text-[15px]'}`}>Email me</a>
-      <button onClick={copy} aria-label="Copy email address" className="text-muted transition-colors hover:text-ink">
+      <button onClick={copy} aria-label="Copy email address" className="pop text-muted hover:text-ink">
         {copied ? Icons.check : Icons.copy}
       </button>
       <span aria-live="polite" className="sr-only">{copied ? 'Email copied' : ''}</span>
@@ -82,7 +82,7 @@ export default function Home() {
         </div>
         <p className="lead mt-10 max-w-[640px]"><Lead /></p>
         <div className="mt-8 flex flex-wrap items-center gap-7 text-[15px]">
-          <Ext href={profile.resumeUrl} className="link">Resume</Ext>
+          <Link to="/resume" className="link">Resume</Link>
           <EmailCopy />
         </div>
       </Reveal>
@@ -99,9 +99,9 @@ export default function Home() {
       <Section n="02" title="Experience">
         <ul className="mt-5 border-t border-line">
           {experience.map((e) => (
-            <li key={e.org} className="border-b border-line py-5">
+            <li key={e.org} className="row isolate border-b border-line py-5">
               <div className="flex flex-wrap items-center gap-x-2.5">
-                <h3 className="h3">{e.url ? <a href={e.url} target="_blank" rel="noreferrer" className="hover:underline underline-offset-4">{e.org}</a> : e.org}</h3>
+                <h3 className="h3 row-title">{e.url ? <a href={e.url} target="_blank" rel="noreferrer" className="hover:underline underline-offset-4">{e.org}</a> : e.org}</h3>
                 {current(e) && <span className="rounded-[5px] bg-accent/10 px-1.5 py-px font-num text-[10.5px] tracking-wide text-accent">NOW</span>}
                 <span className="meta ml-auto">{e.dates}</span>
               </div>
@@ -113,25 +113,43 @@ export default function Home() {
       </Section>
 
       <Section n="03" title="How I work" action={<SideLink to="/about#stack">Full kit</SideLink>}>
-        <p className="mt-6 text-[17px] leading-[31px] text-ink">
+        <p className="lead mt-6">
           {intro.how.map((part, i) =>
-            typeof part === 'string' ? (
-              part
-            ) : (
-              <span key={i} className="inline-flex items-baseline gap-1 font-medium whitespace-nowrap">
-                <img src={`https://cdn.simpleicons.org/${part[0]}`} alt="" width="15" height="15" loading="lazy" className="size-[15px] translate-y-[2px] dark:invert-[.15]" onError={(e) => e.currentTarget.remove()} />
-                {part[1]}
+            content.logos[part] ? (
+              <span key={i} className="mx-0.5 inline-flex items-baseline gap-1.5 font-medium whitespace-nowrap">
+                <ToolLogo name={part} size={17} className="pop translate-y-[3px]" />
+                {part}
               </span>
+            ) : (
+              part
             ),
           )}
         </p>
+        <ol className="mt-8 grid gap-3 sm:grid-cols-3">
+          {intro.workflow.map((w, i) => (
+            <li key={w.title} className="lift group rounded-[12px] border border-line bg-chip p-4">
+              <div className="flex items-center justify-between">
+                <span className="font-num text-xs text-accent">0{i + 1}</span>
+                <span className="flex -space-x-1.5">
+                  {w.tools.map((t) => (
+                    <span key={t} title={t} className="grid size-7 place-items-center rounded-full border border-line bg-col transition-transform duration-300 ease-out group-hover:-translate-y-0.5">
+                      <ToolLogo name={t} size={15} />
+                    </span>
+                  ))}
+                </span>
+              </div>
+              <h3 className="h3 mt-4">{w.title}</h3>
+              <p className="copy mt-1.5 text-[14px] leading-[21px]">{w.body}</p>
+            </li>
+          ))}
+        </ol>
       </Section>
 
       <Section n="04" title="Recognition">
         <ul className="mt-5 border-t border-line">
           {highlights.map((h) => (
-            <li key={h.title} className="flex flex-col gap-1 border-b border-line py-4 sm:flex-row sm:items-baseline sm:gap-6">
-              <span className="text-[16px] text-ink">{h.title}</span>
+            <li key={h.title} className="row isolate flex flex-col gap-1 border-b border-line py-4 sm:flex-row sm:items-baseline sm:gap-6">
+              <span className="row-title text-[16px] text-ink">{h.title}</span>
               <span className="meta sm:ml-auto sm:text-right">{h.detail}</span>
             </li>
           ))}
@@ -140,7 +158,7 @@ export default function Home() {
 
       <Section n="05" title="On GitHub" action={<SideLink href={`https://github.com/${github.username}`}>@{github.username}</SideLink>}>
         {gh?.weeks ? (
-          <GitHubSnake data={gh} />
+          <GitHubGraph data={gh} />
         ) : (
           <p className="copy mt-6">{github.fallback.publicRepos} public repositories and {github.fallback.totalStars} stars so far.</p>
         )}
@@ -153,7 +171,7 @@ export default function Home() {
         <p className="meta mt-3">Based in {profile.location} ({profile.timezone})</p>
         <div className="mt-8 flex flex-wrap items-center gap-7">
           <EmailCopy big />
-          <Ext href={profile.resumeUrl} className="link text-[17px]">Resume</Ext>
+          <Link to="/resume" className="link text-[17px]">Resume</Link>
         </div>
       </Reveal>
     </>
