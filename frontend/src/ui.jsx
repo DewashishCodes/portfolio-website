@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import content from './content/content.json'
+import { useStars } from './live'
 
 // ---- Router: three pages don't justify react-router. ----
 export function usePath() {
@@ -11,6 +12,13 @@ export function usePath() {
     return () => removeEventListener('popstate', on)
   }, [])
   return path
+}
+
+/** Flip light/dark, remember it, and tell the header toggle (it may not be the caller). */
+export function toggleTheme() {
+  const d = document.documentElement.classList.toggle('dark')
+  try { localStorage.theme = d ? 'dark' : 'light' } catch {}
+  dispatchEvent(new Event('themechange'))
 }
 
 /** Scroll to #hash once the new page is in the DOM, or to the top. */
@@ -45,6 +53,7 @@ export const Icons = {
   x: svg(<path fill="currentColor" stroke="none" d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.78L17.75 3Zm-1.08 16.17h1.7L7.4 4.74H5.58l11.1 14.43Z" />, { width: 14, height: 14 }),
   instagram: svg(<><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" /></>),
   linkedin: svg(<path fill="currentColor" stroke="none" d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z" />),
+  search: svg(<><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></>),
   download: svg(<path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14" />),
   moon: svg(<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />),
   sun: svg(<><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>),
@@ -92,28 +101,41 @@ export const AppIcon = ({ p, size = 20 }) =>
   </span>
 )
 
-/** Inline product pill used inside the hero sentence. */
+/** Inline product pill used inside the hero sentence; on hover (mouse only) a screenshot floats above it. */
 export const Chip = ({ p }) => (
-  <a
-    href={p.website || p.github}
-    target="_blank"
-    rel="noreferrer"
-    className="mx-0.5 inline-flex translate-y-[-1px] items-center gap-1.5 rounded-[7px] border border-line bg-chip py-px pr-[7px] pl-1 align-middle leading-7 font-medium text-ink transition-[translate,border-color] duration-300 ease-out hover:-translate-y-[3px] hover:border-muted/40"
+  <Link
+    to={`/projects/${p.slug}`}
+    className="group/chip relative mx-0.5 inline-flex translate-y-[-1px] items-center gap-1.5 rounded-[7px] border border-line bg-chip py-px pr-[7px] pl-1 align-middle leading-7 font-medium text-ink transition-[translate,border-color] duration-300 ease-out hover:-translate-y-[3px] hover:border-muted/40"
   >
     <AppIcon p={p} size={17} />
     {p.short}
-  </a>
+    {p.media && (
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-[calc(100%+12px)] left-1/2 z-30 hidden w-[260px] -translate-x-1/2 translate-y-1.5 scale-95 overflow-hidden rounded-[10px] border border-line bg-chip opacity-0 shadow-[0_18px_40px_-14px_rgba(0,0,0,.35)] transition-[opacity,translate,scale] duration-300 ease-out group-hover/chip:translate-y-0 group-hover/chip:scale-100 group-hover/chip:opacity-100 [@media(hover:hover)]:block"
+      >
+        <img src={p.media} alt="" loading="lazy" className="aspect-[1.6] w-full object-cover object-top" />
+      </span>
+    )}
+  </Link>
 )
 
-export const Status = ({ p }) =>
-  p.live ? (
+export const Status = ({ p }) => {
+  const stars = useStars(p)
+  return (
     <span className="meta inline-flex items-center gap-1.5">
-      <span className="size-1.5 rounded-full bg-green-500" />
+      {p.live && <span className="size-1.5 rounded-full bg-green-500" />}
       {p.status}
+      {stars > 0 && (
+        <span className="inline-flex items-center gap-1" title={`${stars} stars on GitHub`}>
+          · <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" /></svg>
+          {stars}
+          <span className="sr-only">stars</span>
+        </span>
+      )}
     </span>
-  ) : (
-    <span className="meta">{p.status}</span>
   )
+}
 
 /** Fades a block up the first time it scrolls into view. */
 export const Reveal = ({ children, className, as = 'div' }) => {
