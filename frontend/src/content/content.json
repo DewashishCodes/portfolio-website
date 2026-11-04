@@ -319,6 +319,7 @@
     },
     {
       "id": "finish",
+      "panelLabel": "POST-RACE INTERVIEW",
       "type": "contact",
       "trackT": 0.97,
       "camera": { "shot": "heli", "ahead": 30, "radius": 30, "height": 11, "angle": 3.6 },
