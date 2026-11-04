@@ -3,9 +3,10 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import { Box3, CanvasTexture, Group, MathUtils, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, Quaternion, SRGBColorSpace, Vector3 } from 'three'
 import content from '../content/content.json'
-import { mapProgress } from '../lib/scrollMap'
+import { engine } from '../lib/audio'
+import { FINISH_T, mapProgress } from '../lib/scrollMap'
 import { frameAt, TRACK_LENGTH, turnAt } from '../lib/trackSpline'
-import { useRace } from '../store/useRace'
+import { radio, useRace } from '../store/useRace'
 import { kerbAt, poseCamera, rig, shotFor, speedFov } from './rig'
 
 // Model space: Y up, nose toward +Z, 1 unit = 0.0148 m (RootNode cm x Sketchfab 1.48).
@@ -23,6 +24,7 @@ const MAX_ROLL = MathUtils.degToRad(4)
 const READOUT_FLOOR = 40 // km/h shown while the visitor is scrolling, so a dwell never reads as parked
 const CUT_BLACK = 0.09 // s of black before the new shot appears
 const CUT_HOLD = 0.7 // s a shot must hold before the next cut, so dithering on a dwell edge cannot strobe
+const LAUNCH_SHAKE = 700 // ms of camera shake after lights out
 const X = new Vector3(1, 0, 0)
 const Y = new Vector3(0, 1, 0)
 const _look = new Vector3()
@@ -141,9 +143,10 @@ export default function Car() {
   const helmet = useRef()
 
   useFrame((state, dt) => {
+    const realDt = dt < 1 ? dt : 0 // the lap clock uses real time; a long gap means the tab was hidden, so it pauses
     dt = Math.min(dt, 0.05)
     const time = state.clock.elapsedTime
-    const { progress, active, lapMs, lightsOut, scrolledAt } = useRace.getState()
+    const { progress, active, lapMs, lightsOut, lightsOutAt, finishedAt, scrolledAt } = useRace.getState()
     const target = mapProgress(progress).t
     const prev = st.t ?? target
     st.t = MathUtils.damp(prev, target, 4, dt)
@@ -201,7 +204,8 @@ export default function Car() {
     const portrait = camera.aspect < 1 ? 22 : 0
     st.fov = snap ? base + portrait : MathUtils.damp(st.fov, base + portrait + speedFov(st.shot.shot) * sp, 3, dt)
     const mounted = st.shot.shot === 'cockpit' || st.shot.shot === 'onboard-rear' || st.shot.shot === 'chase'
-    const shake = (mounted ? 1 : 0.15) * (speed / 340) * (0.0012 + rig.kerb * 0.0045)
+    const launch = Math.max(0, 1 - (performance.now() - rig.launchAt) / LAUNCH_SHAKE)
+    const shake = (mounted ? 1 : 0.15) * ((speed / 340) * (0.0012 + rig.kerb * 0.0045) + launch * launch * 0.01)
     camera.rotateX((Math.random() - 0.5) * shake + Math.sin(time * 23) * shake * 0.4)
     camera.rotateY(Math.sin(time * 17.3) * shake * 0.3)
 
@@ -224,7 +228,14 @@ export default function Car() {
 
     const scrolling = lightsOut && performance.now() - scrolledAt < 1200
     const readout = scrolling ? Math.max(READOUT_FLOOR, speed) : speed > 1 ? speed : 0
-    const next = { t: st.t, speed: readout, lapMs: lapMs + (speed > 1 ? dt * 1000 : 0) }
+    const next = { t: st.t, speed: readout }
+    if (lightsOutAt && !finishedAt) next.lapMs = lapMs + realDt * 1000
+    if (!finishedAt && lightsOut && st.t >= FINISH_T) {
+      next.finishedAt = performance.now()
+      next.confetti = useRace.getState().confetti + 1
+      radio(lightsOutAt ? 'Chequered flag! What a lap.' : 'Chequered flag! Took the pit lane shortcut, I saw.', 'suit', 'laugh')
+    }
+    engine(Math.max(speed, rig.rev))
     const a = mapProgress(progress).active
     if (a !== active) next.active = a
     useRace.setState(next)
