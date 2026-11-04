@@ -5,12 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Manrope:wght@500&display=swap" rel="stylesheet" />
     <!--head-->
     <script>
-      // Hide the baked Pit Lane while the 3D lap loads; reduced-motion visitors and #pitlane keep it.
-      if (!matchMedia('(prefers-reduced-motion: reduce)').matches && location.hash !== '#pitlane') document.documentElement.classList.add('lap')
+      // Set the theme before first paint so dark-mode visitors never see a light flash.
+      try {
+        const t = localStorage.theme
+        if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark')
+      } catch (e) {}
     </script>
-    <style>.lap [data-ssr] { display: none }</style>
   </head>
   <body>
     <div id="root"></div>
