@@ -1,17 +1,22 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
+import { unlock } from '../lib/achievements'
 import { COLOR, personalBest, saveInitials, savedInitials } from '../lib/lap'
 import { useRace } from '../store/useRace'
 import { fmtLap } from './LapTimer'
+import { TYRES } from './Lights'
+
+const DOT = Object.fromEntries(TYRES.map((t) => [t.key, t.dot]))
 
 const SHOW = 10 // rows above the visitor's own
 
 const gap = (ms, lead) => (ms === lead ? 'LEADER' : `+${((ms - lead) / 1000).toFixed(3)}`)
 
-function Row({ pos, initials, ms, lead, me, ghost }) {
+function Row({ pos, initials, ms, lead, me, ghost, tyre = 'medium' }) {
   return (
-    <li className={`grid grid-cols-[2.2rem_3.2rem_1fr_auto] items-center gap-2 px-3 py-1 font-mono text-[13px] tabular-nums ${me ? 'bg-saffron text-carbon' : 'text-cream odd:bg-cream/[0.04]'}`}>
+    <li className={`grid grid-cols-[2.2rem_0.75rem_3.2rem_1fr_auto] items-center gap-2 px-3 py-1 font-mono text-[13px] tabular-nums ${me ? 'bg-saffron text-carbon' : 'text-cream odd:bg-cream/[0.04]'}`}>
       <span className={me ? 'font-bold' : 'text-cream/60'}>{pos ?? '–'}</span>
+      <span className="size-2.5 rounded-full ring-1 ring-black/50" style={{ background: DOT[tyre] }} title={`${tyre} tyres`} />
       <span className="font-bold tracking-wider">{initials}</span>
       <span className={me ? '' : 'text-cream/60'}>{lead != null ? gap(ms, lead) : ''}</span>
       <span className={ghost ? 'italic' : ''}>{fmtLap(ms)}</span>
@@ -27,7 +32,7 @@ export default function TimingTower() {
   const [initials, setInitials] = useState(savedInitials)
   const [state, setState] = useState('idle') // idle | sending | error text
   const input = useRef()
-  const { lapMs, invalid, jumpStart, reaction, sectors } = useRace.getState()
+  const { lapMs, invalid, jumpStart, reaction, sectors, tyre } = useRace.getState()
   const ms = Math.round(lapMs)
 
   useEffect(() => {
@@ -42,13 +47,14 @@ export default function TimingTower() {
     e.preventDefault()
     if (!/^[A-Za-z0-9]{3}$/.test(initials)) return setState('Three letters or digits.')
     setState('sending')
-    const body = { initials, ms, sectors: sectors.length === 3 ? sectors.map((x) => x.ms) : null, reaction, jump: jumpStart, tyre: 'medium' }
+    const body = { initials, ms, sectors: sectors.length === 3 ? sectors.map((x) => x.ms) : null, reaction, jump: jumpStart, tyre }
     try {
       const r = await fetch('/api/lap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       if (!r.ok) throw r.status === 429 ? 'Too many laps from here, try again later.' : 'Lap rejected.'
       const res = await r.json()
       saveInitials(initials.toUpperCase())
       setMine(res)
+      unlock('lap', { line: `Lap complete, P${res.position} overall.` })
       const fresh = await fetch(`/api/laps`).then((x) => x.json())
       setBoard({ ...fresh, rank: res.position })
       setState('idle')
@@ -65,7 +71,7 @@ export default function TimingTower() {
   const myRowInTop = mine && laps.slice(0, SHOW).some((l) => l.id === mine.id)
   // Not submitted yet: slot a ghost row in where the time would place.
   let rows = laps.slice(0, SHOW).map((l) => ({ ...l, me: mine?.id === l.id }))
-  if (!mine && !invalid && rank && rank <= SHOW) rows.splice(rank - 1, 0, { id: 'you', initials: 'YOU', ms, me: true, ghost: true })
+  if (!mine && !invalid && rank && rank <= SHOW) rows.splice(rank - 1, 0, { id: 'you', initials: 'YOU', ms, me: true, ghost: true, tyre })
   rows = rows.slice(0, SHOW).map((r, i) => ({ ...r, pos: i + 1 })) // everyone behind the ghost drops a place
   const tail = (!mine && !invalid && rank > SHOW) || (mine && !myRowInTop)
   const pb = personalBest()
@@ -92,7 +98,7 @@ export default function TimingTower() {
               {tail && (
                 <>
                   <li aria-hidden="true" className="px-3 text-center font-mono text-xs text-cream/40">⋮</li>
-                  <Row pos={rank} initials={mine ? initials.toUpperCase() : 'YOU'} ms={ms} lead={lead} me ghost={!mine} />
+                  <Row pos={rank} initials={mine ? initials.toUpperCase() : 'YOU'} ms={ms} lead={lead} me ghost={!mine} tyre={tyre} />
                 </>
               )}
             </ol>
