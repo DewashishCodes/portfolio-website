@@ -4,6 +4,7 @@ import { useMemo, useRef } from 'react'
 import { Box3, CanvasTexture, Group, MathUtils, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, Quaternion, SRGBColorSpace, Vector3 } from 'three'
 import content from '../content/content.json'
 import { engine } from '../lib/audio'
+import { updateDrs } from '../lib/drs'
 import { completeSector, SECTORS } from '../lib/lap'
 import { checkpoints, FINISH_T, mapProgress } from '../lib/scrollMap'
 import { frameFor } from '../panels/layouts'
@@ -71,8 +72,38 @@ function useCar() {
     dash.rotation.y = Math.PI
     pivot.add(dash)
 
-    return { scene, pivot, wheels, dash: { ctx: canvas.getContext('2d'), tex } }
+    return { scene, pivot, wheels, dash: { ctx: canvas.getContext('2d'), tex }, wing: rearWing(scene) }
   }, [scene])
+}
+
+// The model's rear wing is part of the body mesh, so find it from the vertices: the highest geometry in the
+// last 0.5 units of the car. Returns the wing's top-trailing edge (scene units) for the DRS flap to sit on.
+function rearWing(scene) {
+  const v = new Vector3()
+  const pts = []
+  let minZ = Infinity
+  scene.traverse((o) => {
+    if (!o.isMesh || o.name.startsWith('Tire') || o.name.startsWith('Rim')) return
+    const pos = o.geometry.attributes.position
+    for (let i = 0; i < pos.count; i += 3) { // every third vertex is plenty
+      v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld)
+      pts.push(v.x, v.y, v.z)
+      if (v.z < minZ) minZ = v.z
+    }
+  })
+  let top = -Infinity
+  for (let i = 0; i < pts.length; i += 3) if (pts[i + 2] < minZ + 0.5 && pts[i + 1] > top) top = pts[i + 1]
+  let x0 = Infinity
+  let x1 = -Infinity
+  let z0 = Infinity
+  let z1 = -Infinity
+  for (let i = 0; i < pts.length; i += 3) {
+    if (pts[i + 2] < minZ + 0.5 && pts[i + 1] > top - 0.06) {
+      x0 = Math.min(x0, pts[i]); x1 = Math.max(x1, pts[i])
+      z0 = Math.min(z0, pts[i + 2]); z1 = Math.max(z1, pts[i + 2])
+    }
+  }
+  return { top, width: x1 - x0, x: (x0 + x1) / 2, z0, z1 }
 }
 
 function drawDash({ ctx, tex }, speed, lapMs) {
@@ -143,6 +174,8 @@ export default function Car() {
   const blob = useMemo(blobTexture, [])
   const st = useRef({ t: null, roll: 0, fov: 60, spin: 0, dashAt: 0, look: new Vector3(), shot: null, cutAt: -9, pending: null, film: 0, outside: true }).current
   const helmet = useRef()
+  const flap = useRef()
+  const w = car.wing
 
   useFrame((state, dt) => {
     const realDt = dt < 1 ? dt : 0 // the lap clock uses real time; a long gap means the tab was hidden, so it pauses
@@ -246,6 +279,9 @@ export default function Car() {
       radio(lightsOutAt ? 'Chequered flag! What a lap.' : 'Chequered flag! Took the pit lane shortcut, I saw.', 'suit', 'laugh')
     }
     engine(Math.max(speed, rig.rev))
+    updateDrs(st.t)
+    st.flap = MathUtils.damp(st.flap ?? 0, useRace.getState().drs ? 1 : 0, 12, dt)
+    flap.current.rotation.x = 0.7 * st.flap // trailing edge (toward -z) lifts: the slot opens
     const a = mapProgress(progress).active
     if (a !== active) next.active = a
     useRace.setState(next)
@@ -260,6 +296,15 @@ export default function Car() {
     <group ref={body}>
       <group position-y={-RIDE} scale={SCALE}>
         <primitive object={car.scene} />
+        {/* DRS flap: pivots on its leading edge, on top of the rear wing. */}
+        <group position={[w.x, w.top + 0.012, w.z1]}>
+          <group ref={flap}>
+            <mesh position={[0, 0, -(w.z1 - w.z0) * 0.45]} castShadow>
+              <boxGeometry args={[w.width * 0.96, 0.025, (w.z1 - w.z0) * 0.9]} />
+              <meshStandardMaterial color={content.livery.colors.body ?? '#C4161C'} roughness={0.35} metalness={0.3} />
+            </mesh>
+          </group>
+        </group>
       </group>
       <group ref={helmet}><Helmet visible /></group>
       <mesh rotation-x={-Math.PI / 2} position-y={0.03} renderOrder={1}>
