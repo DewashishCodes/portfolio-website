@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import content from '../content/content.json'
+import { unlock } from '../lib/achievements'
 import { rig } from '../scene/rig'
-import { radio, scroller, useRace } from '../store/useRace'
+import { chooseTyre, radio, scroller, useRace } from '../store/useRace'
 
 const STEP = 400 // ms between red lights
 const HOLD = 600 // minimum hold with all five lit; a random extra stops visitors timing it
@@ -37,6 +38,7 @@ function react(now) {
   useRace.setState({ reaction: ms })
   if (s.jumpStart) return
   if (ms < PERFECT) {
+    unlock('perfect', { silent: true }) // the line below already says it
     radio(`Perfect start. ${(ms / 1000).toFixed(3)} reaction.`, 'casual', 'laugh')
     useRace.setState((x) => ({ confetti: x.confetti + 1 }))
   } else if (ms < 600) radio(`Good launch. ${(ms / 1000).toFixed(3)} off the line.`, 'casual', 'happy')
@@ -53,6 +55,31 @@ function intent(e) {
   if (!fresh) return // the tail of a gesture that is already counted
   if (s.start === 'lights') return !s.jumpStart && useRace.setState({ jumpStart: true })
   if (s.reaction == null && s.lightsOutAt && e) react(now)
+}
+
+// Strategy call on the grid: how long each checkpoint holds. Same compound colours as the pit stop tabs.
+export const TYRES = [
+  { key: 'soft', label: 'SOFT', dot: '#e8322b', hint: 'Quick skim' },
+  { key: 'medium', label: 'MEDIUM', dot: '#f5c518', hint: 'Balanced' },
+  { key: 'hard', label: 'HARD', dot: '#f2f2f2', hint: 'Full read' },
+]
+
+function TyrePicker() {
+  const tyre = useRace((s) => s.tyre)
+  return (
+    <div role="radiogroup" aria-label="Tyre strategy: how long each stop holds" className="flex gap-2 rounded-xl bg-[#0b0b0c]/85 p-2 ring-1 ring-cream/10">
+      {TYRES.map((t) => (
+        <button key={t.key} type="button" role="radio" aria-checked={tyre === t.key} onClick={() => chooseTyre(t.key)}
+          className={`flex w-[92px] flex-col items-center rounded-lg px-2 py-1.5 font-mono transition-colors ${tyre === t.key ? 'bg-cream/15 ring-1 ring-cream/60' : 'hover:bg-cream/5'}`}>
+          <span className="flex items-center gap-1.5 text-[11px] tracking-[0.15em] text-cream">
+            <span className="size-3 rounded-full ring-2 ring-black/50" style={{ background: t.dot }} aria-hidden="true" />
+            {t.label}
+          </span>
+          <span className="text-[10px] text-cream/60">{t.hint}</span>
+        </button>
+      ))}
+    </div>
+  )
 }
 
 // Skip the ceremony (back from the Pit Lane, or the page loaded part-way down).
@@ -104,6 +131,7 @@ export default function Lights() {
       </p>
       {start === 'grid' && ready && (
         <div className="pointer-events-auto mt-5 flex flex-col items-center gap-2">
+          <TyrePicker />
           <button type="button" onClick={() => intent()}
             className="rounded-md bg-saffron px-5 py-2 font-mono text-xs tracking-[0.25em] text-carbon hover:bg-cream focus-visible:outline-2 focus-visible:outline-cream">
             START THE LAP
