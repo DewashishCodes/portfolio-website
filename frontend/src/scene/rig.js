@@ -64,9 +64,9 @@ export function poseCamera(camera, s, st, time, dt, snap) {
       return FOV.trackside
     }
     case 'heli': {
-      // High, slow orbit around the car, aimed `ahead` metres in front of it so the set piece shares the frame.
+      // High, slow sway around the car, aimed `ahead` metres in front of it so the set piece shares the frame.
       // angle is in the car frame: 0 = in front, PI = behind.
-      const a = (s.angle ?? 2.6) + time * 0.05
+      const a = (s.angle ?? 2.6) + Math.sin(time * 0.12) * 0.35 // sway around the framed angle; a full orbit loses the car on long dwells
       const r = s.radius ?? 24
       _q.set(0, 0, s.ahead ?? 0).applyQuaternion(car.quaternion).add(car.position)
       _p.set(Math.sin(a) * r, s.height ?? 9, Math.cos(a) * r).applyQuaternion(car.quaternion).add(car.position)
@@ -80,9 +80,9 @@ export function poseCamera(camera, s, st, time, dt, snap) {
     }
     case 'onboard-rear': {
       // Nose camera looking back over the halo.
-      camera.position.set(0, 0.72, rig.nose - 0.25)
+      camera.position.set(0, 1.0, rig.nose - 0.6) // high enough to clear the nose bodywork
       car.localToWorld(camera.position)
-      _look.set(0, 0.95, -3)
+      _look.set(0, 0.9, -3)
       car.localToWorld(_look)
       camera.lookAt(_look)
       return FOV['onboard-rear']
