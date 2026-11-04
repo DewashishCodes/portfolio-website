@@ -8,7 +8,6 @@ import Loader from './hud/Loader'
 import LapTimer from './hud/LapTimer'
 import Minimap from './hud/Minimap'
 import RadioPanel from './hud/RadioPanel'
-import SectorLabel from './hud/SectorLabel'
 import SpeedLines from './hud/SpeedLines'
 import { checkpointProgress, checkpoints, SCROLL_UNITS } from './lib/scrollMap'
 import { forcePit } from './lib/quality'
@@ -82,7 +81,6 @@ function Lap() {
       {/* Tall spacer: native scroll is the throttle. */}
       <div style={{ height: `${(SCROLL_UNITS + 1) * 100}vh` }} />
       {/* Before lights out only the minimap and the nav show; the HUD arrives with the start. */}
-      {started && <SectorLabel />}
       {started && <LapTimer />}
       <Minimap />
       <Controls />
