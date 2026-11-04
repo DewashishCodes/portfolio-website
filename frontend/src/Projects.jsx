@@ -24,10 +24,12 @@ const Metric = ({ p }) => p.metric && <p className="mt-2 text-[13px] font-medium
 
 function Row({ p }) {
   return (
-    <li className="border-b border-line py-[22px]">
+    <li className="row isolate border-b border-line py-[22px]">
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-        <AppIcon p={p} />
-        <h3 className="h3">{p.title}</h3>
+        <span className="row-title flex items-center gap-2.5">
+          <AppIcon p={p} />
+          <h3 className="h3">{p.title}</h3>
+        </span>
         <Status p={p} />
         <div className="ml-auto flex gap-4 text-[13.5px] text-muted">
           {p.website && <Ext href={p.website} className="transition-colors hover:text-ink">Website</Ext>}
@@ -44,7 +46,7 @@ function Card({ p }) {
   const href = p.website || p.github
   return (
     <li>
-      <a href={href} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-[10px] border border-line bg-chip" tabIndex={-1} aria-hidden="true">
+      <a href={href} target="_blank" rel="noreferrer" className="lift group block overflow-hidden rounded-[10px] border border-line bg-chip" tabIndex={-1} aria-hidden="true">
         {p.media ? (
           <img src={p.media} alt="" loading="lazy" className="aspect-[332/208] w-full object-cover object-top transition-transform duration-500 ease-out group-hover:scale-[1.02]" />
         ) : (
@@ -57,8 +59,8 @@ function Card({ p }) {
         <AppIcon p={p} />
         <h3 className="h3">{p.title}</h3>
         <div className="ml-auto flex gap-3 text-muted">
-          {p.website && <a href={p.website} target="_blank" rel="noreferrer" aria-label={`${p.title} website`} className="hover:text-ink">{Icons.globe}</a>}
-          {p.github && <a href={p.github} target="_blank" rel="noreferrer" aria-label={`${p.title} on GitHub`} className="hover:text-ink">{Icons.github}</a>}
+          {p.website && <a href={p.website} target="_blank" rel="noreferrer" aria-label={`${p.title} website`} className="pop hover:text-ink">{Icons.globe}</a>}
+          {p.github && <a href={p.github} target="_blank" rel="noreferrer" aria-label={`${p.title} on GitHub`} className="pop hover:text-ink">{Icons.github}</a>}
         </div>
       </div>
       <div className="mt-1.5"><Status p={p} /></div>
