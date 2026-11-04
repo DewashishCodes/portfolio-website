@@ -4,7 +4,7 @@ import content from '../content/content.json'
 import GitHubGraph from '../GitHubGraph'
 import { useLive } from '../live'
 import { ProjectList, ViewToggle } from '../Projects'
-import { Chip, Icons, Link, Reveal, Section, SideLink, ToolLogo } from '../ui'
+import { AppIcon, Chip, Icons, Link, Reveal, Section, SideLink, ToolLogo } from '../ui'
 
 const { profile, intro, projects, experience, highlights, contact, github } = content
 const byTitle = Object.fromEntries(projects.map((p) => [p.title, p]))
@@ -33,6 +33,35 @@ function Greeting() {
         </motion.span>
       </AnimatePresence>
     </span>
+  )
+}
+
+/** "Currently" card: what I'm doing right now, from profile.now. */
+function NowCard() {
+  return (
+    <div className="lift mt-10 rounded-[14px] border border-line bg-chip p-4 sm:p-5">
+      <p className="flex items-center gap-2 font-num text-[11px] tracking-[0.12em] text-muted uppercase">
+        <span className="relative flex size-2">
+          <span className="absolute inset-0 animate-ping rounded-full bg-green-500/60" />
+          <span className="relative size-2 rounded-full bg-green-500" />
+        </span>
+        Now
+      </p>
+      <ul className="mt-3 grid gap-2.5 sm:grid-cols-3 sm:gap-4">
+        {profile.now.map((n) => {
+          const p = byTitle[n.org]
+          return (
+            <li key={n.org} className="flex items-center gap-3 rounded-[10px] border border-line bg-col px-3 py-2.5">
+              {p ? <AppIcon p={p} size={28} /> : <span className="grid size-7 shrink-0 place-items-center rounded-[7px] bg-chip text-[13px] font-semibold text-ink">{n.org[0]}</span>}
+              <div className="min-w-0">
+                <p className="truncate text-[14px] font-medium text-ink">{n.org.split(' – ')[0]}</p>
+                <p className="meta truncate">{n.role}{n.since && ` · since ${n.since}`}</p>
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
   )
 }
 
@@ -85,6 +114,7 @@ export default function Home() {
           <Link to="/resume" className="link">Resume</Link>
           <EmailCopy />
         </div>
+        <NowCard />
       </Reveal>
 
       <Section n="01" title="Things I've built" action={<ViewToggle view={view} setView={setView} />}>
