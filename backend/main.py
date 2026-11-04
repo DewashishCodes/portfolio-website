@@ -1,4 +1,4 @@
-"""DL Grand Prix backend: GitHub telemetry proxy (6 h in-memory cache), contact form, lap leaderboard (SQLite).
+"""Portfolio backend: GitHub telemetry proxy (6 h in-memory cache), contact form, visitor counter (SQLite).
 
 Run: .venv/Scripts/python -m uvicorn main:app --port 8000 --reload
 """
@@ -33,7 +33,7 @@ def load_env():
 
 
 load_env()
-app = FastAPI(title="DL Grand Prix API")
+app = FastAPI(title="Portfolio API")
 _cache: dict[str, tuple[float, dict]] = {}
 
 
@@ -54,7 +54,7 @@ def graphql(query: str, variables: dict | None = None) -> dict:
         r = httpx.post(
             "https://api.github.com/graphql",
             json={"query": query, "variables": variables or {}},
-            headers={"Authorization": f"Bearer {token}", "User-Agent": "dl-grand-prix"},
+            headers={"Authorization": f"Bearer {token}", "User-Agent": "dewashish-portfolio"},
             timeout=15,
         )
     except httpx.HTTPError as e:
@@ -218,90 +218,33 @@ def contact(msg: Contact, request: Request):
     return {"ok": True}
 
 
-# ---------- Lap leaderboard ----------
+# ---------- Visitor counter ----------
 
-LAPS_DB = ROOT / "data" / "laps.db"
-LAP_RATE = 10  # submissions per hour per IP
-MIN_LAP_MS = 8_000  # faster than this is a jump to the end, not a lap
-TOP = 20
+SITE_DB = ROOT / "data" / "site.db"
+VISIT_RATE = 20  # counted visits per hour per IP; the browser also only counts itself once
 
 
 def db() -> sqlite3.Connection:
-    LAPS_DB.parent.mkdir(exist_ok=True)
-    con = sqlite3.connect(LAPS_DB)
-    con.row_factory = sqlite3.Row
-    con.execute(
-        """CREATE TABLE IF NOT EXISTS laps (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            initials TEXT NOT NULL, ms INTEGER NOT NULL,
-            s1 INTEGER, s2 INTEGER, s3 INTEGER,
-            tyre TEXT NOT NULL, reaction INTEGER, jump INTEGER NOT NULL DEFAULT 0,
-            at TEXT NOT NULL)"""
-    )
-    con.execute("CREATE INDEX IF NOT EXISTS laps_ms ON laps (ms, id)")
+    SITE_DB.parent.mkdir(exist_ok=True)
+    con = sqlite3.connect(SITE_DB)
+    con.execute("CREATE TABLE IF NOT EXISTS counters (name TEXT PRIMARY KEY, n INTEGER NOT NULL)")
+    con.execute("INSERT OR IGNORE INTO counters VALUES ('visits', 0)")
     return con
 
 
-class Lap(BaseModel):
-    initials: str = Field(min_length=3, max_length=3)
-    ms: int = Field(ge=MIN_LAP_MS, le=3_600_000)
-    sectors: list[int] | None = Field(None, min_length=3, max_length=3)
-    tyre: str = Field("medium", pattern="^(soft|medium|hard)$")
-    reaction: int | None = Field(None, ge=0, le=600_000)
-    jump: bool = False
-
-    @field_validator("initials")
-    @classmethod
-    def letters(cls, v):
-        v = v.upper()
-        if not re.fullmatch(r"[A-Z0-9]{3}", v):
-            raise ValueError("three letters or digits")
-        return v
-
-    @field_validator("sectors")
-    @classmethod
-    def sectors_add_up(cls, v, info):
-        if v is None:
-            return v
-        if any(s <= 0 for s in v):
-            raise ValueError("sector times must be positive")
-        ms = info.data.get("ms")
-        if ms is not None and abs(sum(v) - ms) > 1500:  # a little slack for frame rounding
-            raise ValueError("sectors must add up to the lap time")
-        return v
+def visit_count(con) -> int:
+    return con.execute("SELECT n FROM counters WHERE name = 'visits'").fetchone()[0]
 
 
-def row(r: sqlite3.Row) -> dict:
-    return {
-        "id": r["id"], "initials": r["initials"], "ms": r["ms"],
-        "sectors": [r["s1"], r["s2"], r["s3"]] if r["s1"] is not None else None,
-        "tyre": r["tyre"], "reaction": r["reaction"], "jump": bool(r["jump"]), "at": r["at"],
-    }
-
-
-@app.post("/api/lap")
-def submit_lap(lap: Lap, request: Request):
-    rate_limit("lap", client_ip(request), LAP_RATE, "Too many laps, try again in an hour")
-    s = lap.sectors or [None, None, None]
+@app.post("/api/visit")
+def count_visit(request: Request):
+    rate_limit("visit", client_ip(request), VISIT_RATE, "Already counted")
     with closing(db()) as con, con:
-        cur = con.execute(
-            "INSERT INTO laps (initials, ms, s1, s2, s3, tyre, reaction, jump, at) VALUES (?,?,?,?,?,?,?,?,?)",
-            (lap.initials, lap.ms, *s, lap.tyre, lap.reaction, int(lap.jump), datetime.now(timezone.utc).isoformat()),
-        )
-        lap_id = cur.lastrowid
-        # Ties go to whoever set the time first.
-        position = con.execute("SELECT COUNT(*) FROM laps WHERE ms < ? OR (ms = ? AND id < ?)", (lap.ms, lap.ms, lap_id)).fetchone()[0] + 1
-        total = con.execute("SELECT COUNT(*) FROM laps").fetchone()[0]
-    return {"id": lap_id, "position": position, "total": total}
+        con.execute("UPDATE counters SET n = n + 1 WHERE name = 'visits'")
+        return {"visits": visit_count(con)}
 
 
-@app.get("/api/laps")
-def laps(ms: int | None = Query(None, ge=0, le=3_600_000)):
-    """Top 20. With ?ms=, also where that time would place (for a lap not yet submitted)."""
+@app.get("/api/visits")
+def visits():
     with closing(db()) as con:
-        top = [row(r) for r in con.execute("SELECT * FROM laps ORDER BY ms, id LIMIT ?", (TOP,))]
-        total = con.execute("SELECT COUNT(*) FROM laps").fetchone()[0]
-        out = {"laps": top, "total": total}
-        if ms is not None:
-            out["rank"] = con.execute("SELECT COUNT(*) FROM laps WHERE ms <= ?", (ms,)).fetchone()[0] + 1
-    return out
+        return {"visits": visit_count(con)}
