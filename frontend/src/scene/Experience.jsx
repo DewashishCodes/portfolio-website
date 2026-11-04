@@ -5,6 +5,7 @@ import { PCFShadowMap, PCFSoftShadowMap } from 'three'
 import { maxTier, TIERS } from '../lib/quality'
 import { useRace } from '../store/useRace'
 import Car from './Car'
+import HiddenBoards from './HiddenBoards'
 import Checkpoints from './Checkpoints'
 import Effects from './Effects'
 import Environment from './Environment'
@@ -70,6 +71,10 @@ export default function Experience() {
     <Canvas
       className="!fixed inset-0"
       aria-hidden="true"
+      // The scroll spacer sits on top of the canvas; take pointer events from the whole page so hidden boards
+      // can be clicked. Only meshes with handlers are raycast.
+      eventSource={document.getElementById('root')}
+      eventPrefix="client"
       camera={{ fov: 60, near: 0.05, far: 6000 }}
       dpr={DPR[quality]}
       gl={{ antialias: quality === 'low', powerPreference: 'high-performance' }}
@@ -84,6 +89,7 @@ export default function Experience() {
         <SetPieces />
         <Checkpoints />
         <Car />
+        <HiddenBoards />
         {quality !== 'low' && <Effects full={quality === 'high'} />}
         <Preload all /* compile every shader and upload every texture before the first scroll, not during it */ />
       </Suspense>
