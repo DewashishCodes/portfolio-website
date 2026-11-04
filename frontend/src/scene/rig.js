@@ -11,6 +11,8 @@ export const rig = {
   kerb: 0, // 0..1, how hard the car is cornering, drives shake
   shot: 'chase',
   eye: new Vector3(), // cockpit eye, car local metres
+  rev: 0, // engine rev target while held on the grid (km/h equivalent)
+  launchAt: -1e9, // performance.now() at lights out, for the launch shake
   nose: 2.6, // metres from car origin to the front wing tip, set from the model bounds
 }
 
