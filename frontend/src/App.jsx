@@ -4,6 +4,8 @@ import Confetti from './hud/Confetti'
 import Controls from './hud/Controls'
 import FinishBanner from './hud/FinishBanner'
 import Lights, { skipStart } from './hud/Lights'
+import TimingTower from './hud/TimingTower'
+import { trackValidity } from './lib/lap'
 import Loader from './hud/Loader'
 import LapTimer from './hud/LapTimer'
 import Minimap from './hud/Minimap'
@@ -57,6 +59,7 @@ function Lap() {
       requestAnimationFrame(() => lenis.scrollTo(checkpointProgress(goTo) * lenis.limit, { immediate: true }))
     } else if (useRace.getState().start !== 'go') lenis.stop() // Lights.jsx starts it at lights out
     const last = checkpoints.length - 1
+    const unsubValid = trackValidity()
     const unsub = useRace.subscribe((s, prev) => {
       if (s.active !== prev.active) lenis.options.lerp = s.active === last ? FINISH_LERP : LERP
     })
@@ -64,6 +67,7 @@ function Lap() {
     return () => {
       window.removeEventListener('keydown', jump)
       unsub()
+      unsubValid()
       lenis.destroy()
       scroller.lenis = null
     }
@@ -88,6 +92,7 @@ function Lap() {
       {started && <RadioPanel />}
       <Lights />
       <FinishBanner />
+      <TimingTower />
       <Confetti />
       <Loader />
     </>
