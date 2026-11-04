@@ -79,36 +79,27 @@ export default function RadioPanel() {
   const [shown, typing] = useTypewriter(line)
   const head = headSrc(msg.outfit, msg.expression)
 
+  // The mascot lives here and only here: the full-body pose when the checkpoint has one, else the head.
+  const avatar = msg.fullBody ?? head
   return (
-    <>
-      {/* Full-body cut-out at the moments content.json gives one. */}
-      <AnimatePresence>
-        {msg.fullBody && (
-          <motion.img key={msg.fullBody} src={msg.fullBody} alt="" aria-hidden="true"
-            className="pointer-events-none fixed right-[448px] bottom-4 hidden max-h-[230px] w-auto drop-shadow-2xl sm:block"
-            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} transition={{ duration: 0.35 }} />
-        )}
-      </AnimatePresence>
-
-      <section aria-label="Team radio"
-        className="hud-glass fixed right-0 bottom-0 left-0 flex h-[84px] overflow-hidden rounded-none sm:right-4 sm:bottom-4 sm:left-auto sm:h-[120px] sm:w-[320px] sm:rounded-[10px]">
-        <div className="w-1 shrink-0 bg-saffron" />
-        <div className="relative w-[72px] shrink-0 sm:w-[100px]">
-          <AnimatePresence initial={false}>
-            <motion.img key={head} src={head} alt="" className="absolute inset-0 m-auto max-h-[80%] w-auto"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} />
-          </AnimatePresence>
+    <section aria-label="Team radio"
+      className="hud-glass fixed right-0 bottom-0 left-0 flex h-[96px] overflow-hidden rounded-none sm:right-auto sm:bottom-4 sm:left-[212px] sm:h-[132px] sm:w-[340px] sm:rounded-[10px]">
+      <div className="w-1 shrink-0 bg-saffron" />
+      <div className="relative w-[84px] shrink-0 bg-gradient-to-t from-saffron/15 to-transparent sm:w-[124px]">
+        <AnimatePresence initial={false}>
+          <motion.img key={avatar} src={avatar} alt="" className="absolute inset-x-0 bottom-0 m-auto max-h-[94%] max-w-[94%] object-contain object-bottom"
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} />
+        </AnimatePresence>
+      </div>
+      <div className="min-w-0 flex-1 py-2 pr-3 pl-1">
+        <div className="mb-1 flex items-center gap-2 font-mono text-[10px] tracking-[0.2em] text-cream/70">
+          RADIO · DL ENGINEER <Waveform live={typing} />
         </div>
-        <div className="min-w-0 flex-1 py-2 pr-3">
-          <div className="mb-1 flex items-center gap-2 font-mono text-[10px] tracking-[0.2em] text-cream/70">
-            RADIO · DL ENGINEER <Waveform live={typing} />
-          </div>
-          <p className="text-[13px] leading-snug text-cream sm:text-sm" aria-live="polite">
-            <span className="sr-only">{line}</span>
-            <span aria-hidden="true">{shown}</span>
-          </p>
-        </div>
-      </section>
-    </>
+        <p className="text-[13px] leading-snug text-cream sm:text-sm" aria-live="polite">
+          <span className="sr-only">{line}</span>
+          <span aria-hidden="true">{shown}</span>
+        </p>
+      </div>
+    </section>
   )
 }
