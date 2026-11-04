@@ -39,41 +39,49 @@
     "lead": "I build AI products and the backends behind them. I'm building {Yap}, voice typing for Android in the languages India actually speaks, and I make tools for people who work with AI agents: {Agent Office}, {Dolphin} and {Tokenmeter}.",
     "how": [
       "Mostly ",
-      [
-        "python",
-        "Python"
-      ],
+      "Python",
       " and ",
-      [
-        "fastapi",
-        "FastAPI"
-      ],
+      "FastAPI",
       " on the backend, ",
-      [
-        "typescript",
-        "TypeScript"
-      ],
+      "TypeScript",
       " on the front, agents built with ",
-      [
-        "claude",
-        "Claude Code"
-      ],
+      "Claude Code",
       " and ",
-      [
-        "langchain",
-        "LangGraph"
-      ],
+      "LangGraph",
       ", shipped on ",
-      [
-        "cloudflareworkers",
-        "Cloudflare Workers"
-      ],
+      "Cloudflare Workers",
       " and ",
-      [
-        "docker",
-        "Docker"
-      ],
+      "Docker",
       "."
+    ],
+    "workflow": [
+      {
+        "title": "Prototype in days, not weeks",
+        "body": "Python and FastAPI to get something real in front of people fast, then iterate on what they actually use.",
+        "tools": [
+          "Python",
+          "FastAPI",
+          "SQLite"
+        ]
+      },
+      {
+        "title": "Agents in the daily loop",
+        "body": "Claude Code, MCP servers and LangGraph do the heavy lifting. Hard-coded guardrails, not the model, get the final say.",
+        "tools": [
+          "Claude Code",
+          "LangGraph",
+          "Gemini API"
+        ]
+      },
+      {
+        "title": "Ship small, then harden",
+        "body": "Cloudflare Workers, Docker and Postgres underneath, React or Next.js on top, deployed where the users are.",
+        "tools": [
+          "Cloudflare Workers",
+          "Docker",
+          "PostgreSQL"
+        ]
+      }
     ]
   },
   "projects": [
@@ -86,9 +94,10 @@
       "pitch": "Speak in Hinglish, English, Hindi or Marathi and Yap types clean, ready-to-send text in any app, even turning Hinglish into polished English.",
       "website": "https://yap.pages.dev",
       "github": "https://github.com/yap-voice",
-      "media": "",
+      "media": "/media/yap.webp",
       "metric": "",
-      "tags": []
+      "tags": [],
+      "icon": "/icons/yap.svg"
     },
     {
       "title": "Agent Office",
@@ -108,7 +117,8 @@
         "Git worktrees",
         "PWA",
         "SQLite"
-      ]
+      ],
+      "icon": "/icons/agent-office.svg"
     },
     {
       "title": "Dolphin",
@@ -128,7 +138,8 @@
         "MCP",
         "SQLite",
         "Ollama"
-      ]
+      ],
+      "icon": "/icons/dolphin.webp"
     },
     {
       "title": "Tokenmeter",
@@ -147,7 +158,8 @@
         "Windows",
         "Data viz",
         "Local-first"
-      ]
+      ],
+      "icon": "/icons/tokenmeter.webp"
     },
     {
       "title": "Janus",
@@ -167,26 +179,27 @@
         "Postgres",
         "Next.js",
         "Guardrails"
-      ]
+      ],
+      "icon": "/icons/janus.webp"
     },
     {
-      "title": "Multimodal RAG · HackRx 6.0",
-      "short": "HackRx RAG",
-      "color": "#e11d48",
-      "status": "Open source",
-      "live": false,
-      "pitch": "Answers questions over 800+ page documents in under 18 seconds. Top 180 of 46,178 participants.",
-      "website": "",
-      "github": "https://github.com/DewashishCodes/HackrX6.0_Claud9",
-      "media": "/media/hackrx-rag.webp",
-      "metric": "Top 180 of 46,178 participants",
+      "title": "BharatPrivacyPrint",
+      "short": "BharatPrivacyPrint",
+      "color": "#f97316",
+      "status": "Live",
+      "live": true,
+      "pitch": "Send your Aadhaar or PAN to a print shop without leaving a copy behind. Files are encrypted on your phone, and the link self-destructs after printing.",
+      "website": "https://bharatprivacyprint.pages.dev",
+      "github": "https://github.com/DewashishCodes/BharatPrivacyPrint",
+      "media": "/media/bharatprivacyprint.webp",
+      "metric": "AES-256 on device · zero-knowledge links",
       "tags": [
-        "Python",
-        "FastAPI",
-        "RAG",
-        "Gemini",
-        "Document parsing"
-      ]
+        "JavaScript",
+        "PWA",
+        "Web Crypto",
+        "Cloudflare"
+      ],
+      "icon": "/icons/bharatprivacyprint.webp"
     }
   ],
   "moreProjects": [
@@ -204,11 +217,6 @@
       "title": "DeepMind HOPE in PyTorch",
       "pitch": "From-scratch reimplementation with differentiable memory.",
       "url": "https://github.com/DewashishCodes/Nested-Learning"
-    },
-    {
-      "title": "BharatPrivacyPrint",
-      "pitch": "Aadhaar/PAN links that self-destruct after printing.",
-      "url": "https://github.com/DewashishCodes/bharatprivacyprint"
     },
     {
       "title": "VisualTorch",
@@ -497,5 +505,45 @@
   "otherAchievements": [
     "Built a lab component management system adopted college-wide, serving 800+ users",
     "Ran faculty workshops on LLM workflows and AI automation, rated 4.98/5"
-  ]
+  ],
+  "logos": {
+    "Python": "python",
+    "Go": "go",
+    "C++": "cplusplus",
+    "C": "c",
+    "JavaScript": "javascript",
+    "TypeScript": "typescript",
+    "Kotlin": "kotlin",
+    "PyTorch": "pytorch",
+    "CUDA": "nvidia",
+    "Scikit-learn": "scikitlearn",
+    "NumPy": "numpy",
+    "Pandas": "pandas",
+    "PySpark": "apachespark",
+    "Hugging Face": "huggingface",
+    "Gemini API": "googlegemini",
+    "Ollama": "ollama",
+    "Claude Code": "claude",
+    "LangChain": "langchain",
+    "LangGraph": "langchain",
+    "Claude Code plugins": "claude",
+    "FastAPI": "fastapi",
+    "Node.js": "nodejs",
+    "Docker": "docker",
+    "AWS": "aws",
+    "GCP": "googlecloud",
+    "Azure": "azure",
+    "Cloudflare Workers": "cloudflare",
+    "Apache Airflow": "airflow",
+    "PostgreSQL": "postgresql",
+    "MySQL": "mysql",
+    "SQLite": "sqlite",
+    "Supabase": "supabase",
+    "React": "react",
+    "Next.js": "nextjs",
+    "Tailwind CSS": "tailwindcss",
+    "Electron": "electron",
+    "PWA": "pwa",
+    "Android Studio": "androidstudio"
+  }
 }
