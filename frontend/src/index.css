@@ -1,84 +1,94 @@
 @import 'tailwindcss';
 
-@theme {
-  --color-cream: #f2e8d5;
-  --color-saffron: #e86a1f;
-  --color-rosso: #c4161c;
-  --color-carbon: #151515;
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Tokens measured from the reference (see minimal_pivot.md §3). */
+:root {
+  --page: #f0efeb;
+  --col: #faf8f3;
+  --ink: #39352f;
+  --body: #1d1d20;
+  --muted: #736d64;
+  --line: #e7e2d9;
+  --chip: #f1ede5;
+  --accent: #e8552a;
+  --g0: #ebe7df;
+  --g1: #b4dfa9;
+  --g2: #74c467;
+  --g3: #3f9e4a;
+  --g4: #1f6a2c;
+  --snake: #e8552a;
+  color-scheme: light;
+}
+.dark {
+  --page: #050506;
+  --col: #111113;
+  --ink: #f2f0ec;
+  --body: #e8e6e1;
+  --muted: #a3a3a8;
+  --line: #242427;
+  --chip: #1c1c1f;
+  --g0: #1d1d20;
+  --g1: #0e4429;
+  --g2: #006d32;
+  --g3: #26a641;
+  --g4: #39d353;
+  color-scheme: dark;
 }
 
-html,
+@theme inline {
+  --color-page: var(--page);
+  --color-col: var(--col);
+  --color-ink: var(--ink);
+  --color-body: var(--body);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-chip: var(--chip);
+  --color-accent: var(--accent);
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-num: 'Manrope', 'Geist', sans-serif;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+html {
+  background: var(--page);
+  scroll-padding-top: 80px;
+}
 body {
   margin: 0;
-  background: #151515;
-  color: #f2e8d5;
-  font-family: Inter, system-ui, sans-serif;
+  background: var(--page);
+  color: var(--body);
+  font: 16px/24px var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+::selection {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
-.hud-glass {
-  background: rgba(21, 21, 21, 0.72);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(242, 232, 213, 0.12);
-  border-radius: 10px;
-}
+.h1 { font-size: 40px; line-height: 42px; letter-spacing: -1.8px; font-weight: 600; color: var(--ink); }
+.h1-sub { font-size: 32px; line-height: 36px; letter-spacing: -1.1px; font-weight: 600; color: var(--ink); }
+.h2 { font-size: 19px; line-height: 24.7px; letter-spacing: -0.57px; font-weight: 600; color: var(--ink); }
+.h3 { font-size: 16px; line-height: 24px; letter-spacing: -0.24px; font-weight: 550; color: var(--ink); }
+.copy { font-size: 15px; line-height: 22.5px; letter-spacing: -0.2px; color: var(--muted); }
+.lead { font-size: 19px; line-height: 32px; letter-spacing: -0.2px; color: var(--ink); }
+.meta { font-size: 13px; color: var(--muted); }
 
-.radio-bar {
-  height: 3px;
-  animation: radio-bar 0.5s ease-in-out infinite alternate;
+.link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  transition: text-decoration-color 0.2s var(--ease-out);
 }
-@keyframes radio-bar {
-  to {
-    height: 12px;
-  }
-}
+.link:hover { text-decoration-color: var(--muted); }
 
-/* Info panels: near-solid so body text stays above 4.5:1 over any part of the scene. */
-.panel-glass {
-  background: rgba(16, 16, 18, 0.9);
-  border: 1px solid rgba(242, 232, 213, 0.14);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(232, 106, 31, 0.6) transparent;
-}
-@supports (backdrop-filter: blur(1px)) {
-  .panel-glass {
-    background: rgba(16, 16, 18, 0.82);
-    backdrop-filter: blur(14px);
-  }
-}
+.arrow { transition: transform 0.25s var(--ease-out); }
+.group:hover .arrow { transform: translate(1.5px, -1.5px); }
 
-/* Speed lines: thin conic streaks, masked to the edges of the frame, flickering as they rotate. */
-.speed-lines {
-  background: repeating-conic-gradient(from 0deg at 50% 52%, rgba(255, 244, 228, 0.55) 0deg 0.35deg, transparent 0.35deg 3.1deg, rgba(255, 244, 228, 0.3) 3.1deg 3.3deg, transparent 3.3deg 7deg);
-  mask-image: radial-gradient(ellipse 70% 62% at 50% 52%, transparent 55%, #000 100%);
-  -webkit-mask-image: radial-gradient(ellipse 70% 62% at 50% 52%, transparent 55%, #000 100%);
-  animation: speed-lines 0.18s steps(3) infinite;
-  mix-blend-mode: screen;
-}
-@keyframes speed-lines {
-  to {
-    transform: rotate(2.2deg) scale(1.04);
-  }
-}
-
-/* Camera cut: a few frames of black between shots, F1-TV style. Opacity is set from the render loop. */
-#cut {
-  background: #000;
-  opacity: 0;
-}
+a, button { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .speed-lines {
-    display: none;
-  }
-}
-
-/* Chequered strip for the finish banner and the timer's FINISHED tag. */
-.chequer {
-  background: repeating-conic-gradient(#f2e8d5 0 25%, #151515 0 50%) 0 0 / 10px 10px;
-}
-
-/* Input is locked while the start lights run. */
-html.lenis-stopped {
-  overflow: hidden;
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
