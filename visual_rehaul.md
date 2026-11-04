@@ -138,6 +138,8 @@ Each milestone is independently shippable and has a definition of done. Order is
 3. Finish sequence. On entering the Finish dwell: camera cuts to `heli`, time dilation (Lenis lerp tightened so the car crosses the line in slow motion), chequered flag waves, lap time freezes on the HUD in large type, then the contact panel slides in titled "Post-race interview".
 4. Lap timer semantics. The timer runs from lights out to the finish line crossing. It pauses while the tab is hidden. It is the visitor's score (see milestone 4).
 
+**Status (2026-11-04, session 2).** Code complete, not yet checked in a browser (the Chrome extension was not connected). Built: grid lock with five-light sequence, random hold, reaction time, jump start, launch shake, HUD reveal at lights out, finish line crossing with slow-motion run-out, chequered banner with frozen lap time, "Post-race interview" panel, confetti, lap clock from lights out to the line that pauses on a hidden tab, synthesised engine audio behind a SOUND toggle.
+
 **Done when.** A visitor who has never seen the site understands within three seconds that this is a race they are driving, and leaves the finish with a number.
 
 ### Milestone 3: Checkpoint variety and panel redesign
@@ -257,3 +259,23 @@ Gotchas:
 - Editing `scene/rig.js` with the dev server running can leave two copies of the `rig` module under HMR, and the camera goes wrong until a full reload.
 - One High-tier load showed a speed reading (51 km/h) with no scroll input, likely from browser scroll restoration.
 - Chrome automation tabs throttle requestAnimationFrame, so fps measured there is not real. Use `gl.render` plus `gl.getContext().finish()` timing for GPU cost instead.
+
+### 2026-11-04 (session 2): Milestone 2 built, engine audio added
+
+New files:
+- `hud/Lights.jsx`: the start. On the grid Lenis is stopped (`html.lenis-stopped` hides overflow) and only the minimap and nav show. The first scroll intent (wheel, touch drag, scroll key or the START THE LAP button) lights five reds 400 ms apart, holds 600 ms plus up to 600 ms random, then lights out: `lenis.start()`, `start: 'go'`, `lightsOutAt`. Intents are grouped into gestures by a 250 ms quiet gap so trackpad momentum is one gesture. A new gesture during the lights is a jump start; the first new gesture after lights out is the reaction time (under 200 ms = perfect start plus confetti). `skipStart()` is used when coming back from the Pit Lane mid-lap.
+- `hud/FinishBanner.jsx`: on crossing the line, chequered strip, lap time in large type for 2.8 s, then sets `interview` so the finish panel opens (label `panelLabel: "POST-RACE INTERVIEW"` in content.json).
+- `hud/Confetti.jsx`: 2D canvas burst from two bottom corners, fired by bumping `confetti` in the store. Off under reduced motion. Reusable for the podium in milestone 3.
+- `lib/audio.js`: WebAudio engine (saw + square through a resonant low-pass), pitch saw-tooths through the gears. The context is only created from the SOUND toggle click, suspends on a hidden tab. During the lights `rig.rev` revs it.
+
+Changes:
+- `lib/scrollMap.js` exports `START_T` and `FINISH_T`. The finish dwell now runs from the checkpoint to 20 m past the line, so the car crosses it slowly in the last viewport; a jump to the finish lands at 0.9 of the dwell, past the line. The finish gantry moved from +55 m to +25 m. Lenis lerp drops to 0.035 in the finish dwell.
+- `store/useRace.js`: `ready`, `start`, `lights`, `lightsOutAt`, `reaction`, `jumpStart`, `finishedAt`, `interview`, `cue`, `confetti`, and `radio(line, outfit, expression)` for race-event radio lines (they hold the radio for 4.5 s).
+- `scene/Car.jsx`: lap clock (real time, pauses when a frame gap is over 1 s), finish detection, launch shake, engine update.
+- `hud/Loader.jsx` is now a progress bar with the mascot; the start lights live only on the grid.
+- `history.scrollRestoration = 'manual'` and a scroll to top on load, which fixes the phantom 51 km/h on reload.
+
+Resume with:
+1. Browser pass on milestone 2: start on wheel, trackpad, touch, keyboard and the button; jump start; perfect start; finish banner timing; heli framing of the finish gantry at +25 m (retune `finish.camera` if the gantry is out of frame); engine sound level.
+2. Milestone 1 leftover still open: heat haze (High only).
+3. Then milestone 3.
