@@ -58,8 +58,17 @@ export default function Confetti() {
       raf = requestAnimationFrame(frame)
     }
     const unsub = useRace.subscribe((s, prev) => s.confetti !== prev.confetti && fire())
+    // First arrival on the podium fires one burst.
+    const podium = content.checkpoints.findIndex((c) => c.id === 'podium')
+    let celebrated = false
+    const unsubPodium = useRace.subscribe((s, prev) => {
+      if (celebrated || s.active !== podium || prev.active === podium) return
+      celebrated = true
+      setTimeout(fire, 350) // after the heli cut
+    })
     return () => {
       unsub()
+      unsubPodium()
       cancelAnimationFrame(raf)
     }
   }, [])
