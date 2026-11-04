@@ -159,6 +159,8 @@ Each milestone is independently shippable and has a definition of done. Order is
 9. Mascot gets one home: inside the radio panel at roughly twice the current avatar size, with the full-body pose swapping per checkpoint. Remove the floating copy over the steering wheel. Outfit and expression already come from `content.json`.
 10. HUD hierarchy: lap timer becomes the primary element (top right, larger numerals, sector colours), the sector pill merges into it, the minimap shrinks slightly, the quality pill moves into a settings drawer behind a small gear icon.
 
+**Status (2026-11-04, session 3).** Built and checked in Chrome at 1366x639. All ten items done. Deviations: the radio moved to the bottom-left beside the minimap (it freed the right column; without that the media panel could not fit a 768 px laptop); the podium strip is a bottom-right lower third; sector bars fill yellow for now (purple and green need milestone 4 personal bests); credits moved from the contact panel to the settings drawer in the lap (the Pit Lane keeps them).
+
 **Done when.** Scrolling through T1 to T5 shows five visibly different screens, no panel has an inner scrollbar, the mascot appears once, and the billboards show something the panel does not.
 
 ### Milestone 4: Lap timer, sectors and leaderboard
@@ -279,3 +281,26 @@ Resume with:
 1. Browser pass on milestone 2: start on wheel, trackpad, touch, keyboard and the button; jump start; perfect start; finish banner timing; heli framing of the finish gantry at +25 m (retune `finish.camera` if the gantry is out of frame); engine sound level.
 2. Milestone 1 leftover still open: heat haze (High only).
 3. Then milestone 3.
+
+### 2026-11-04 (session 3): Milestone 3 built and checked in a browser
+
+The browser pass (Chrome, 1366x639 viewport) also covered milestone 2: grid, START THE LAP, lights out, HUD reveal, reaction readout, finish crossing, FINISHED tag, post-race interview panel. All work.
+
+Layout system:
+- `panels/layouts.js`: `LAYOUTS` (side and width per layout) and `frameFor(cp, width)`. `Car.jsx` reads it to push the car into the free side of the frame. Every checkpoint has `layout` in content.json; projects alternate `panelSide` left and right.
+- `panels/InfoPanel.jsx` places by side. Panels size to their content with a max height. Left: below the nav, above the minimap and radio. Right: below the lap timer, down to the edge. Bottom (podium): right of the radio, falls back to the right edge below about 1150 px wide.
+- `panels/sections.jsx`: shared `Tabs` (one tab at a time in the lap, all stacked in the Pit Lane), `CountUp`, and `Tags max` with "+N". Projects: screenshot hero (capped at 27vh), first sentence of the pitch, five tags, and a TELEMETRY toggle that swaps the bullets into the hero box. Stack: tyre-compound tabs and a real stationary clock. Research: one paper at a time. Team HQ: three tabs. Fan zone: three best posts plus platform buttons. Contact: name and email side by side, one big send button.
+
+World:
+- Billboards (`scene/Checkpoints.jsx`) are 1600x900. Projects show the full-bleed screenshot; other checkpoints show their `board` fact from content.json.
+- `scene/SetPieces.jsx`: pit wall telemetry screen (canvas: full-year heatmap and sparkline from the live API, fallback numbers offline), moved so it sits behind the car in its trackside shot; pit box with four crew and a lollipop man (the pit stop checkpoint has `stop: true`: no creep, and the readout may show 0); fan zone social boards angled at the oncoming car; crowd flipbook at 7 fps at podium and finish; podium confetti fires once on first arrival (`hud/Confetti.jsx`).
+- The heli shot now sways around its framed angle instead of orbiting (a long dwell used to swing the camera in front of the car and lose it). Onboard-rear camera raised to clear the nose bodywork. Pit stop heli re-aimed (ahead 6, radius 24).
+
+HUD: the sector pill merged into the lap timer (label, clock, speed, S1 to S3 bars, reaction). The mascot appears only in the radio, full-body when the checkpoint has a pose. Minimap is 168x118. Settings drawer behind a gear: sound, graphics tier, credits. The idle radio line now counts from lights out.
+
+Resume with:
+1. Milestone 4 (sector colours, leaderboard backend, timing tower, lap validity).
+2. Still open from milestone 1: heat haze.
+3. Unverified: phone layouts (bottom sheet and full-width radio against the minimap), the live heatmap on the pit wall screen (the backend was not running), podium confetti timing in a normal tab.
+
+Gotcha: the Chrome automation tab runs at about 0.5 fps, so after a jump the car takes ~40 s to catch up there. Judge framing only after waiting.
