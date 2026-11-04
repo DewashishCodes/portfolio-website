@@ -32,26 +32,19 @@ assert c.get("/api/github/repos", params={"names": "bad name"}).status_code == 4
 
 main.MESSAGES.unlink()
 
-# Laps: validation, ranking, tie order, top list, rate limit.
-main.LAPS_DB = main.ROOT / "data" / "test-laps.db"
-main.LAPS_DB.unlink(missing_ok=True)
+# Visits: counts up, reads without counting, rate limited per IP.
+main.SITE_DB = main.ROOT / "data" / "test-site.db"
+main.SITE_DB.unlink(missing_ok=True)
 main._hits.clear()
-lap = {"initials": "dlb", "ms": 61_000, "sectors": [20_000, 21_000, 20_000], "reaction": 240}
-assert c.post("/api/lap", json={**lap, "ms": 5_000, "sectors": None}).status_code == 422  # scroll-to-end
-assert c.post("/api/lap", json={**lap, "initials": "D!"}).status_code == 422
-assert c.post("/api/lap", json={**lap, "sectors": [1, 2, 3]}).status_code == 422  # must add up
-assert c.post("/api/lap", json={**lap, "tyre": "slick"}).status_code == 422
-r = c.post("/api/lap", json=lap).json()
-assert r["position"] == 1 and r["total"] == 1
-assert c.post("/api/lap", json={**lap, "initials": "ABC", "ms": 50_000, "sectors": None}).json()["position"] == 1
-assert c.post("/api/lap", json={**lap, "initials": "XYZ"}).json()["position"] == 3  # tie: the earlier lap stays ahead
-top = c.get("/api/laps", params={"ms": 55_000}).json()
-assert [x["initials"] for x in top["laps"]] == ["ABC", "DLB", "XYZ"] and top["rank"] == 2 and top["total"] == 3
-assert top["laps"][1]["sectors"] == [20_000, 21_000, 20_000]
-for _ in range(7):
-    c.post("/api/lap", json=lap)
-assert c.post("/api/lap", json=lap).status_code == 429
-main.LAPS_DB.unlink()
+assert c.get("/api/visits").json() == {"visits": 0}
+assert c.post("/api/visit").json() == {"visits": 1}
+assert c.post("/api/visit").json() == {"visits": 2}
+assert c.get("/api/visits").json() == {"visits": 2}
+for _ in range(18):
+    c.post("/api/visit")
+assert c.post("/api/visit").status_code == 429
+assert c.get("/api/visits").json() == {"visits": 20}
+main.SITE_DB.unlink()
 
 # Client IP: X-Forwarded-For only counts behind trusted proxies, and only the hop the proxy wrote.
 class Req:
