@@ -9,7 +9,7 @@
       {
         "role": "Founder",
         "org": "Yap",
-        "url": "https://yap.pages.dev",
+        "url": "https://getyap.pages.dev",
         "since": ""
       },
       {
@@ -92,12 +92,37 @@
       "status": "Pilot run",
       "live": true,
       "pitch": "Speak in Hinglish, English, Hindi or Marathi and Yap types clean, ready-to-send text in any app, even turning Hinglish into polished English.",
-      "website": "https://yap.pages.dev",
+      "website": "https://getyap.pages.dev",
       "github": "https://github.com/yap-voice",
       "media": "/media/yap.webp",
       "metric": "",
-      "tags": [],
-      "icon": "/icons/yap.svg"
+      "tags": [
+        "Kotlin",
+        "Android",
+        "Cloudflare Workers",
+        "LLM cleanup",
+        "Speech-to-text"
+      ],
+      "icon": "/icons/yap.svg",
+      "slug": "yap",
+      "story": [
+        {
+          "label": "Problem",
+          "text": "typing on a phone is slow, and most voice typing breaks the moment you mix Hindi and English the way people actually talk."
+        },
+        {
+          "label": "Built",
+          "text": "an Android app with a floating dictation bubble that works in any text box. AI cleanup removes fillers and fixes punctuation, with voice editing and read-aloud, on a Cloudflare Workers backend."
+        },
+        {
+          "label": "Result",
+          "text": "speak in Hinglish, English, Hindi or Marathi and get clean, ready-to-send text, even Hinglish turned into polished English. Now in a private pilot."
+        }
+      ],
+      "clip": "/media/clips/yap.mp4",
+      "gallery": [
+        "/media/yap-screens.webp"
+      ]
     },
     {
       "title": "Agent Office",
@@ -118,7 +143,25 @@
         "PWA",
         "SQLite"
       ],
-      "icon": "/icons/agent-office.svg"
+      "icon": "/icons/agent-office.svg",
+      "slug": "agent-office",
+      "story": [
+        {
+          "label": "Problem",
+          "text": "coding agents need constant babysitting, and you can't supervise them away from your desk."
+        },
+        {
+          "label": "Built",
+          "text": "an Orchestrator splits orders into tasks; specialist agents work in parallel in their own git worktrees, and a Reviewer and QA agent check every PR before it reaches you."
+        },
+        {
+          "label": "Result",
+          "text": "a phone-installable PWA with push notifications that approve plans and merge PRs, plus per-agent budgets, deny rules and a kill switch."
+        }
+      ],
+      "license": "AGPL-3.0",
+      "clip": "",
+      "gallery": []
     },
     {
       "title": "Dolphin",
@@ -139,7 +182,27 @@
         "SQLite",
         "Ollama"
       ],
-      "icon": "/icons/dolphin.webp"
+      "icon": "/icons/dolphin.webp",
+      "slug": "dolphin",
+      "story": [
+        {
+          "label": "Problem",
+          "text": "LLM apps and agent sessions forget everything between conversations."
+        },
+        {
+          "label": "Built",
+          "text": "a Python SDK (add, search, get_context) and an MCP server + Claude Code plugin; an LLM extracts subject-relationship-object triples into a graph, and recall walks one hop out so related facts surface even with no shared words."
+        },
+        {
+          "label": "Result",
+          "text": "runs fully local (SQLite, ONNX embeddings, Ollama), published on PyPI as dolphin-memory; my most-starred repo."
+        }
+      ],
+      "license": "",
+      "clip": "/media/clips/dolphin.mp4",
+      "gallery": [
+        "/media/dolphin-graph.webp"
+      ]
     },
     {
       "title": "Tokenmeter",
@@ -159,7 +222,28 @@
         "Data viz",
         "Local-first"
       ],
-      "icon": "/icons/tokenmeter.webp"
+      "icon": "/icons/tokenmeter.webp",
+      "slug": "tokenmeter",
+      "story": [
+        {
+          "label": "Problem",
+          "text": "heavy Claude Code users can't see where their tokens and money go."
+        },
+        {
+          "label": "Built",
+          "text": "an Electron app that reads local session files and shows cost, cache savings, a 30-day projection, a 90-day heatmap, peak hours and per-project sparklines."
+        },
+        {
+          "label": "Result",
+          "text": "zero telemetry, no API keys, a system-tray counter and a pixel companion; shipped as installer and portable builds."
+        }
+      ],
+      "license": "MIT",
+      "clip": "",
+      "gallery": [
+        "/media/tokenmeter-2.webp",
+        "/media/tokenmeter-3.webp"
+      ]
     },
     {
       "title": "Janus",
@@ -180,7 +264,25 @@
         "Next.js",
         "Guardrails"
       ],
-      "icon": "/icons/janus.webp"
+      "icon": "/icons/janus.webp",
+      "slug": "janus",
+      "story": [
+        {
+          "label": "Problem",
+          "text": "revenue leaks through failed debits, revoked mandates and late invoices, each handled reactively with no record of what was tried."
+        },
+        {
+          "label": "Built",
+          "text": "one agent that detects, diagnoses the root cause, picks a bounded action on an escalating channel ladder (nudge, SMS/email, voice, human) and reports ₹ at risk vs ₹ recovered."
+        },
+        {
+          "label": "Result",
+          "text": "guardrails written as tested code, not prompts, that can override the LLM; a full replayable audit trail and a live recovery dashboard."
+        }
+      ],
+      "license": "",
+      "clip": "/media/clips/janus.mp4",
+      "gallery": []
     },
     {
       "title": "BharatPrivacyPrint",
@@ -194,12 +296,31 @@
       "media": "/media/bharatprivacyprint.webp",
       "metric": "AES-256 on device · zero-knowledge links",
       "tags": [
-        "JavaScript",
-        "PWA",
+        "React",
         "Web Crypto",
-        "Cloudflare"
+        "Supabase",
+        "PWA",
+        "Cloudflare Pages",
+        "i18n"
       ],
-      "icon": "/icons/bharatprivacyprint.webp"
+      "icon": "/icons/bharatprivacyprint.webp",
+      "slug": "bharatprivacyprint",
+      "story": [
+        {
+          "label": "Problem",
+          "text": "every Aadhaar or PAN sent to a print shop over WhatsApp, email or USB stays on their computer for good, with no way to delete it."
+        },
+        {
+          "label": "Built",
+          "text": "a PWA that encrypts the document on your phone (AES-256-GCM, key only in the URL fragment), then shares a link that expires after N opens or N minutes, with an optional PIN."
+        },
+        {
+          "label": "Result",
+          "text": "the print shop opens the link, it auto-prints, and the link self-destructs. The server only ever sees encrypted blobs. Free, no account, Hindi first with 22 Indian languages."
+        }
+      ],
+      "clip": "/media/clips/bharatprivacyprint.mp4",
+      "gallery": []
     }
   ],
   "moreProjects": [
@@ -454,7 +575,7 @@
       "bullets": [
         "Building Yap, voice typing for Android in Hinglish, English, Hindi and Marathi, now in a pilot run."
       ],
-      "url": "https://yap.pages.dev"
+      "url": "https://getyap.pages.dev"
     },
     {
       "role": "Founding Engineer (part-time)",
