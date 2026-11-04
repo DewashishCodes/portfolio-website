@@ -5,23 +5,28 @@ import { fmtLap } from './LapTimer'
 
 const SHOW = 2800 // ms the lap time holds the screen before the post-race interview opens
 
-// Chequered flag moment: the frozen lap time in large type, then hand over to the contact panel.
+// Chequered flag moment: the frozen lap time in large type, then hand over to the timing tower.
 export default function FinishBanner() {
   const finishedAt = useRace((s) => s.finishedAt)
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
     if (!finishedAt) return
-    if (performance.now() - finishedAt > SHOW) return useRace.setState({ interview: true }) // shown before a Pit Lane visit
+    // Timed laps go to the timing tower next; an untimed one (joined from the Pit Lane) straight to the interview.
+    const after = () => {
+      const { lightsOutAt, interview } = useRace.getState()
+      if (!interview) useRace.setState(lightsOutAt ? { tower: true } : { interview: true })
+    }
+    if (performance.now() - finishedAt > SHOW) return after() // shown before a Pit Lane visit
     setOpen(true)
     const id = setTimeout(() => {
       setOpen(false)
-      useRace.setState({ interview: true })
+      after()
     }, SHOW)
     return () => clearTimeout(id)
   }, [finishedAt])
 
-  const { lapMs, lightsOutAt, reaction, jumpStart } = useRace.getState()
+  const { lapMs, lightsOutAt, reaction, jumpStart, invalid } = useRace.getState()
   const timed = lightsOutAt > 0
   return (
     <AnimatePresence>
@@ -37,6 +42,7 @@ export default function FinishBanner() {
           </p>
           <p className="mt-2 font-mono text-xs tracking-[0.25em] text-saffron drop-shadow-[0_1px_6px_rgba(0,0,0,0.9)]">
             {!timed ? 'LAP NOT TIMED · JOINED FROM THE PIT LANE'
+              : invalid ? 'LAP INVALID · CHECKPOINT SKIPPED'
               : jumpStart ? 'JUMP START · +5S PENALTY (WE WON\'T TELL)'
                 : reaction != null ? `REACTION ${(reaction / 1000).toFixed(3)}S` : 'LAP COMPLETE'}
           </p>
