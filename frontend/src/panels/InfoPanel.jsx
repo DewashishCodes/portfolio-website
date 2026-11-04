@@ -6,8 +6,10 @@ import { Label, SECTIONS } from './sections'
 // The readable layer: one DOM panel per checkpoint, open only while the car holds there.
 export default function InfoPanel() {
   const active = useRace((s) => s.active)
+  const interview = useRace((s) => s.interview)
   const cp = checkpoints[active]
-  const Section = cp && SECTIONS[cp.type]
+  // The finish panel waits for the car to cross the line and the lap time to hold the screen.
+  const Section = cp && (cp.type !== 'contact' || interview) && SECTIONS[cp.type]
   return (
     <AnimatePresence mode="wait">
       {Section && (
@@ -21,7 +23,7 @@ export default function InfoPanel() {
           exit={{ opacity: 0, x: 40 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
         >
-          <Label>{cp.label}</Label>
+          <Label>{cp.panelLabel ?? cp.label}</Label>
           <div className="mt-1">
             <Section cp={cp} />
           </div>
