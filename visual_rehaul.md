@@ -190,6 +190,8 @@ Each milestone is independently shippable and has a definition of done. Order is
 4. Achievements as radio toasts, in character, each at most eight words: "Perfect start.", "Purple sector.", "All projects opened.", "Found the hidden board.", "Night race.", "Lap complete, P4 overall."
 5. Night race. Read the visitor's local hour. 19:00 to 06:00 gets floodlit night: dark sky, cold floodlights on masts, warm pit building glow, car headlights, the heatmap screen glows. Same geometry, different lighting rig in `scene/Environment.jsx`. Huge perceived variety for one lighting preset.
 
+**Status (2026-11-04, session 5).** All five items built. Checked in Chrome: tyre picker and layout rebuild, both DRS zones, the DRS badge and flap, the night lighting rig. Not verified: clicking a hidden board (the test tab closed mid-check), achievements firing in a real lap.
+
 **Done when.** A second visit feels different from the first (tyre, time of day, collectibles found).
 
 ### Milestone 6: Shareable race card and branching radio
@@ -327,3 +329,31 @@ Resume with:
 2. Before deploying: `client_ip` uses the socket address; behind a proxy it must read the trusted X-Forwarded-For, or every visitor shares one rate limit.
 3. Then milestone 5 (DRS, tyre choice, collectibles, achievements, night race). Tyre choice will start sending a real `tyre` with the lap.
 4. Still open: heat haze, phone layouts.
+
+### 2026-11-04 (session 5): Milestone 5 built, proxy-safe rate limit
+
+Backend: `client_ip` reads `X-Forwarded-For` only when `TRUSTED_PROXY_HOPS=N` is set, and takes the Nth entry from the right (the one the proxy wrote). Set it on deploy (1 behind a single proxy). Committed as 32983f2.
+
+Tyres:
+- `lib/scrollMap.js` now builds its layout with `setDwell(d)`; `DWELLS` = soft 0.6, medium 1, hard 1.4 viewports per checkpoint. `scrollUnits()` replaces the old constant. The self-check runs for all three.
+- `chooseTyre()` in the store (grid only) rebuilds the layout, remembers the choice in localStorage `dl-gp-tyre`, and resizes Lenis. The picker sits above START THE LAP in `hud/Lights.jsx` (`TYRES` is exported for the compound colours).
+- Hard opens each project's bullets by default. The tyre is submitted with the lap and shown as a dot per row in the timing tower.
+
+DRS (`lib/drs.js`):
+- Zones are found from the spline: the two longest runs that are nearly straight and at least 35 m from any checkpoint (currently ~137 m before T1, ~133 m between Wind Tunnel and Fan Zone). A detection line and DRS boards mark each.
+- Shift or a 350 ms long press, inside a zone, sets `drs`. Lenis' `virtualScroll` hook doubles the delta (Lenis copies `wheelMultiplier` at construction, so changing it later does nothing). The hook also turns Windows' Shift+wheel horizontal delta back into vertical.
+- The car model has no separate wing part, so `rearWing()` in `Car.jsx` finds the wing from the body vertices and a flap sits on it, lifting its trailing edge when DRS opens. HUD: green DRS ENABLED / DRS OPEN strip in the lap timer.
+
+Collectibles and achievements (`lib/achievements.js`, `scene/HiddenBoards.jsx`):
+- 13 pit boards, one per checkpoint, 12-26 m past it just off the road, waving gently. They can be overridden per checkpoint with `"hidden": { "ahead", "lateral" }` in content.json. Found boards persist in `dl-gp-boards`; a BOARDS n/13 chip appears in the nav. All 13 gives a secret radio line and a chequered stamp on the RESUME button.
+- The Canvas now takes pointer events from `#root` (`eventSource`, `eventPrefix="client"`), because the scroll spacer covers it. Clicks on HUD elements are ignored by the boards.
+- Achievements (persisted in `dl-gp-achievements`, each fires once per browser as a radio line): perfect start, purple sector, DRS, all five projects, hidden board, night race, lap on the board (with position), full lap.
+
+Night race:
+- `night` in the store: local 19:00 to 06:00, or `?time=night` / `?time=day`, or the DAY / NIGHT switch in the settings drawer.
+- `Environment.jsx`: `LIGHTING.day` / `LIGHTING.night` drive the sky dome uniforms, fog, hemisphere, IBL and the sun (a cold moon at night). At night, `Floodlights` adds ~27 masts with unlit white heads that bloom, one warm spot that follows the car (cheaper than a light per mast), and a headlight spot.
+
+Resume with:
+1. Verify in a normal browser: click a hidden board, collect all 13, achievements in a real lap, DRS speed-up with a real Shift+wheel and a long press on a phone.
+2. Milestone 6 (race card, branching radio, photo mode).
+3. Still open: heat haze, phone layouts.
