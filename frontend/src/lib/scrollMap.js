@@ -1,4 +1,5 @@
 import content from '../content/content.json'
+import { TRACK_LENGTH } from './trackSpline'
 
 // Scroll layout in viewport units: each checkpoint holds for DWELL, straights take TRAVEL.
 const DWELL = 1
@@ -6,6 +7,14 @@ const TRAVEL = 0.5
 const CREEP = 0.0015 // track t the car still creeps during a dwell, so it never looks frozen
 
 export const checkpoints = content.checkpoints
+const last = checkpoints.length - 1
+
+// Start and finish lines (the gantries in SetPieces sit here). The last dwell runs past the finish line,
+// so the car crosses it slowly while the visitor scrolls the final viewport: the slow-motion finish.
+export const START_T = checkpoints[0].trackT + 55 / TRACK_LENGTH
+export const FINISH_T = checkpoints[last].trackT + 25 / TRACK_LENGTH
+const RUN_OUT = 20 / TRACK_LENGTH
+const FINISH_AT = 0.9 // where in the finish dwell a jump lands: past the line, so jumping there still finishes
 
 const segs = []
 let u = 0
@@ -14,7 +23,7 @@ checkpoints.forEach((cp, i) => {
     segs.push({ type: 'travel', u0: u, u1: u + TRAVEL, t0: checkpoints[i - 1].trackT + CREEP, t1: cp.trackT - CREEP })
     u += TRAVEL
   }
-  segs.push({ type: 'dwell', i, u0: u, u1: u + DWELL, t0: cp.trackT - CREEP, t1: cp.trackT + CREEP })
+  segs.push({ type: 'dwell', i, u0: u, u1: u + DWELL, t0: cp.trackT - CREEP, t1: i === last ? FINISH_T + RUN_OUT : cp.trackT + CREEP })
   u += DWELL
 })
 
@@ -35,7 +44,7 @@ export function mapProgress(p) {
 // Progress value that lands a little inside checkpoint i's dwell zone.
 export function checkpointProgress(i) {
   const s = segs.find((g) => g.type === 'dwell' && g.i === i)
-  return (s.u0 + 0.25 * DWELL) / SCROLL_UNITS
+  return (s.u0 + (i === last ? FINISH_AT : 0.25) * DWELL) / SCROLL_UNITS
 }
 
 // Self-check: t never decreases with progress and every checkpoint resolves to itself.
@@ -47,4 +56,5 @@ if (import.meta.env.DEV) {
     prev = t
   }
   checkpoints.forEach((_, i) => console.assert(mapProgress(checkpointProgress(i)).active === i, 'scrollMap: cp', i))
+  console.assert(mapProgress(checkpointProgress(last)).t > FINISH_T, 'scrollMap: finish jump lands short of the line')
 }
