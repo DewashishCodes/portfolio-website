@@ -1,10 +1,11 @@
 import { useFrame } from '@react-three/fiber'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { CanvasTexture, NearestFilter, PlaneGeometry, RepeatWrapping, SRGBColorSpace, Vector2 } from 'three'
 import content from '../content/content.json'
 import { useRace } from '../store/useRace'
 import { outsideSign, place, TRACK_LENGTH, ROAD_WIDTH } from '../lib/trackSpline'
 import { FINISH_T, START_T } from '../lib/scrollMap'
+import { useLive } from '../lib/live'
 import { rng } from './Environment'
 
 const m = (metres) => metres / TRACK_LENGTH
@@ -154,6 +155,8 @@ function GridSlots() {
 // Crowd sprite sheet: one strip of fans, two frames (seated / cheering) stacked vertically.
 // Shirts come from a small warm palette, not random hues, so the stands read as a crowd and not as noise.
 const CROWD_FRAME = 2 // flipbook frames per second
+const CROWD_CHEER = 7
+const CHEER = new Set(content.checkpoints.flatMap((c, i) => (c.id === 'podium' || c.id === 'finish' ? [i] : [])))
 function crowdTexture() {
   const W = 512
   const H = 64
@@ -214,8 +217,11 @@ function Grandstand({ rows = 8, length = 44 }) {
     t.needsUpdate = true
     return t
   }), [sheet, rows, length])
-  useFrame(({ clock }) => {
-    const frame = Math.floor(clock.elapsedTime * CROWD_FRAME)
+  const st = useMemo(() => ({ f: 0 }), [])
+  useFrame((_, dt) => {
+    const cheer = CHEER.has(useRace.getState().active) ? CROWD_CHEER : CROWD_FRAME // the crowd goes wild at podium and finish
+    st.f += Math.min(dt, 0.1) * cheer
+    const frame = Math.floor(st.f)
     rowTex.forEach((t, row) => (t.offset.y = (frame + row) % 2 ? 0.5 : 0))
   })
   const roofY = 0.8 * rows + 4
@@ -289,17 +295,174 @@ function Podium() {
   )
 }
 
-function TelemetryScreen() {
+// Pit wall screen: the full-year contribution heatmap from the live API (content.json numbers when offline).
+const HEAT = ['#1a2230', '#7a3a14', '#b5521b', '#E86A1F', '#ffb071']
+function drawTelemetry(g, live) {
+  const W = 1024
+  const H = 552
+  g.fillStyle = '#07090d'
+  g.fillRect(0, 0, W, H)
+  g.fillStyle = colors.accent
+  g.fillRect(0, 0, W, 10)
+  g.fillStyle = '#F2E8D5'
+  g.font = 'bold 44px ui-monospace, monospace'
+  g.fillText('GITHUB TELEMETRY', 40, 72)
+  g.fillStyle = 'rgba(242,232,213,0.6)'
+  g.font = '26px ui-monospace, monospace'
+  g.fillText('@' + content.github.username, 40, 110)
+  const stats = live ?? content.github.fallback
+  const tiles = live
+    ? [['CONTRIBUTIONS', live.total], ['STREAK', live.currentStreak + 'd'], ['BEST', live.longestStreak + 'd']]
+    : [['REPOS', stats.publicRepos], ['STARS', stats.totalStars], ['FOLLOWERS', stats.followers]]
+  tiles.forEach(([k, v], i) => {
+    const x = 560 + i * 158
+    g.fillStyle = 'rgba(242,232,213,0.55)'
+    g.font = '18px ui-monospace, monospace'
+    g.fillText(k, x, 62)
+    g.fillStyle = '#F2E8D5'
+    g.font = 'bold 46px ui-monospace, monospace'
+    g.fillText(String(v), x, 110)
+  })
+  const weeks = live?.weeks ?? []
+  const cell = 17
+  const gap = 2
+  const x0 = (W - 53 * (cell + gap)) / 2
+  for (let w = 0; w < 53; w++) {
+    for (let d = 0; d < 7; d++) {
+      const n = weeks[weeks.length - 53 + w]?.[d]?.count ?? 0
+      g.fillStyle = HEAT[n === 0 ? 0 : n < 3 ? 1 : n < 6 ? 2 : n < 10 ? 3 : 4]
+      g.fillRect(x0 + w * (cell + gap), 170 + d * (cell + gap), cell, cell)
+    }
+  }
+  g.fillStyle = 'rgba(242,232,213,0.5)'
+  g.font = '20px ui-monospace, monospace'
+  g.fillText(live ? 'LAST 12 MONTHS · LIVE' : 'LIVE FEED OFFLINE', x0, 330)
+  // Sparkline of weekly totals along the bottom.
+  const totals = weeks.slice(-53).map((w) => w.reduce((a, d) => a + d.count, 0))
+  const max = Math.max(1, ...totals)
+  g.strokeStyle = colors.accent
+  g.lineWidth = 4
+  g.beginPath()
+  totals.forEach((v, i) => g[i ? 'lineTo' : 'moveTo'](x0 + i * (cell + gap) + cell / 2, 510 - (v / max) * 140))
+  g.stroke()
+}
+
+// mirror: the Piece wrapper mirrors left-side pieces; flip the face back so the text reads.
+function TelemetryScreen({ mirror = 1 }) {
+  const live = useLive('/api/github/contributions')
+  const tex = useMemo(() => {
+    const c = document.createElement('canvas')
+    c.width = 1024
+    c.height = 552
+    const t = new CanvasTexture(c)
+    t.colorSpace = SRGBColorSpace
+    t.anisotropy = 8
+    return t
+  }, [])
+  useEffect(() => {
+    drawTelemetry(tex.image.getContext('2d'), live)
+    tex.needsUpdate = true
+  }, [tex, live])
   return (
     <group rotation-y={Math.PI / 2}>
-      {[-7, 7].map((x) => <Box key={x} args={[0.5, 6, 0.5]} position={[x, 3, -0.4]} color="#2a2a2d" />)}
-      <Box args={[16, 9, 0.5]} position={[0, 9, -0.4]} color="#111114" />
-      <mesh name="telemetry-screen" position={[0, 9, -0.1]}>
+      {[-7, 7].map((x) => <Box key={x} args={[0.5, 1.6, 0.5]} position={[x, 0.8, -0.4]} color="#2a2a2d" />)}
+      <Box args={[16, 9, 0.5]} position={[0, 6, -0.4]} color="#111114" />
+      <mesh name="telemetry-screen" position={[0, 6, -0.1]} scale-x={mirror}>
         <planeGeometry args={[15.2, 8.2]} />
-        <meshStandardMaterial color="#05070a" emissive="#0b2233" />
+        <meshBasicMaterial map={tex} toneMapped={false} />
       </mesh>
     </group>
   )
+}
+
+// Pit crew at the four wheels plus the lollipop man, around the car's stopping point in the pit box.
+// Car local: +x = driver's left, +z = forward; wheels at about x ±0.95, z +1.6 / -2.0.
+function CrewMember({ position, face, crouch = true }) {
+  const h = crouch ? 0.75 : 1.15
+  return (
+    <group position={position} rotation-y={face}>
+      <Box args={[0.42, h * 0.55, 0.32]} position={[0, h * 0.27, 0]} color={colors.carbon} />
+      <mesh position={[0, h * 0.55 + 0.32, 0.06]} rotation-x={crouch ? 0.5 : 0} castShadow>
+        <capsuleGeometry args={[0.22, 0.42, 4, 10]} />
+        <meshStandardMaterial color={colors.carbon} roughness={0.8} />
+      </mesh>
+      <Box args={[0.46, 0.08, 0.36]} position={[0, h * 0.55 + 0.42, 0.1]} color={colors.accent} />
+      <mesh position={[0, h * 0.55 + 0.82, crouch ? 0.28 : 0.05]} castShadow>
+        <sphereGeometry args={[0.16, 14, 10]} />
+        <meshStandardMaterial color={colors.body} roughness={0.3} metalness={0.2} />
+      </mesh>
+    </group>
+  )
+}
+
+function PitBox({ t }) {
+  const { position, rotY } = place(t, 0)
+  const wheels = [[1, 1.6], [-1, 1.6], [1, -2.0], [-1, -2.0]]
+  return (
+    <group position={position} rotation-y={rotY}>
+      {wheels.map(([x, z]) => <CrewMember key={`${x}${z}`} position={[x * 1.75, 0, z]} face={x > 0 ? -Math.PI / 2 : Math.PI / 2} />)}
+      <CrewMember position={[0, 0, 4.3]} face={Math.PI} crouch={false} />
+      <group position={[0.35, 0, 4.1]}>
+        <Box args={[0.06, 1.9, 0.06]} position={[0, 0.95, 0]} color="#d9d9d9" />
+        <mesh position={[0, 2.05, 0]} rotation-y={Math.PI}>
+          <circleGeometry args={[0.3, 20]} />
+          <meshStandardMaterial color={colors.body} side={2} />
+        </mesh>
+      </group>
+      {/* Pit box markings under the car. */}
+      {[[-1.7, 0, 0.12, 7.6], [1.7, 0, 0.12, 7.6], [0, 3.8, 3.52, 0.12], [0, -3.8, 3.52, 0.12]].map(([x, z, w, l]) => (
+        <mesh key={`${x}${z}`} rotation-x={-Math.PI / 2} position={[x, 0.028, z]}>
+          <planeGeometry args={[w, l]} />
+          <meshStandardMaterial color={colors.accent} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+// Fan zone: the social handles as trackside boards, angled toward the oncoming car.
+function socialTexture({ platform, handle, followers, showFollowers }) {
+  const c = document.createElement('canvas')
+  c.width = 1024
+  c.height = 400
+  const g = c.getContext('2d')
+  g.fillStyle = colors.carbon
+  g.fillRect(0, 0, 1024, 400)
+  g.fillStyle = colors.body
+  g.fillRect(0, 0, 24, 400)
+  g.fillStyle = colors.accent
+  g.font = 'bold 54px ui-monospace, monospace'
+  g.fillText(platform.toUpperCase(), 70, 100)
+  g.fillStyle = '#F2E8D5'
+  g.font = 'bold 96px system-ui, sans-serif'
+  g.fillText(handle, 70, 230, 900)
+  if (showFollowers && followers) {
+    g.fillStyle = 'rgba(242,232,213,0.7)'
+    g.font = '52px ui-monospace, monospace'
+    g.fillText(`${followers} FOLLOWERS`, 70, 330)
+  }
+  const t = new CanvasTexture(c)
+  t.colorSpace = SRGBColorSpace
+  t.anisotropy = 8
+  return t
+}
+
+function SocialBoards({ t }) {
+  const boards = useMemo(() => content.socials.map((s, i) => {
+    const side = i % 2 ? -1 : 1 // alternate driver's right / left
+    const { position, rotY } = place(t + m(22 + i * 16), side * 15.6)
+    return { key: s.platform, position, rotY: rotY + side * (Math.PI / 2 + 0.6), tex: socialTexture(s) }
+  }), [t])
+  return boards.map((b) => (
+    <group key={b.key} position={b.position} rotation-y={b.rotY}>
+      {[-2.4, 2.4].map((x) => <Box key={x} args={[0.18, 1.2, 0.18]} position={[x, 0.6, -0.1]} color="#2a2a2d" />)}
+      <Box args={[6.3, 2.55, 0.15]} position={[0, 2.35, -0.1]} color="#1c1c1f" />
+      <mesh position={[0, 2.35, 0]}>
+        <planeGeometry args={[6.1, 2.38]} />
+        <meshBasicMaterial map={b.tex} toneMapped={false} />
+      </mesh>
+    </group>
+  ))
 }
 
 function Motorhomes() {
@@ -318,9 +481,12 @@ export default function SetPieces() {
       <GridSlots />
       <Piece t={cpT.grid + m(60)} lateral={22}><Grandstand /></Piece>
       <Piece t={cpT.podium + m(32)} lateral={26}><Podium /></Piece>
-      <Piece t={cpT.telemetry + m(60)} lateral={24}><TelemetryScreen /></Piece>
+      {/* Across the track from the trackside camera, so the screen is the backdrop behind the car. */}
+      <Piece t={cpT.telemetry + m(22)} lateral={27} side={outsideSign(cpT.telemetry)}><TelemetryScreen mirror={outsideSign(cpT.telemetry)} /></Piece>
       <Piece t={cpT.pitstop + m(36)} lateral={30}><PitBuilding /></Piece>
+      <PitBox t={cpT.pitstop} />
       <Piece t={cpT.fanzone + m(55)} lateral={22}><Grandstand rows={10} length={60} /></Piece>
+      <SocialBoards t={cpT.fanzone} />
       <Piece t={cpT.paddock + m(60)} lateral={28}><Motorhomes /></Piece>
       <Gantry t={FINISH_T} kind="finish" />
     </>
