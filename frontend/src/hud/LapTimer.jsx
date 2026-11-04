@@ -38,6 +38,8 @@ export default function LapTimer() {
   const reaction = useRace((s) => s.reaction)
   const sectors = useRace((s) => s.sectors)
   const invalid = useRace((s) => s.invalid)
+  const drsZone = useRace((s) => s.drsZone)
+  const drs = useRace((s) => s.drs)
   const flash = useFlash()
   const cp = checkpoints[active]
   return (
@@ -74,6 +76,12 @@ export default function LapTimer() {
           )
         })}
       </div>
+      {drsZone && (
+        <div className={`flex items-center justify-between px-3 py-1 text-[11px] tracking-[0.2em] ${drs ? 'bg-[#3ad16b] font-bold text-carbon' : 'bg-[#3ad16b]/15 text-[#3ad16b]'}`} role="status">
+          <span>DRS {drs ? 'OPEN' : 'ENABLED'}</span>
+          {!drs && <span className="text-[10px] text-cream/70">HOLD <kbd>SHIFT</kbd> / LONG-PRESS</span>}
+        </div>
+      )}
       {flash && (
         <div className="flex items-center justify-between px-3 py-1 text-sm font-bold" style={{ background: `${COLOR[flash.color]}26`, color: COLOR[flash.color] }}>
           <span>SECTOR {flash.i + 1}</span>
