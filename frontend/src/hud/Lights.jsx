@@ -27,7 +27,7 @@ function go() {
   rig.rev = 0
   rig.launchAt = performance.now()
   scroller.lenis?.start()
-  useRace.setState({ start: 'go', lights: 0, lightsOut: true, lightsOutAt: performance.now() })
+  useRace.setState({ start: 'go', lights: 0, lightsOut: true, lightsOutAt: performance.now(), scrolledAt: performance.now() }) // idle line counts from here
   if (useRace.getState().jumpStart) radio('Jump start. Five second penalty. Kidding, mostly.', 'casual', 'smirk')
 }
 
