@@ -30,4 +30,25 @@ assert c.post("/api/contact", json=good).status_code == 429
 assert c.get("/api/github/repos", params={"names": "bad name"}).status_code == 422
 
 main.MESSAGES.unlink()
+
+# Laps: validation, ranking, tie order, top list, rate limit.
+main.LAPS_DB = main.ROOT / "data" / "test-laps.db"
+main.LAPS_DB.unlink(missing_ok=True)
+main._hits.clear()
+lap = {"initials": "dlb", "ms": 61_000, "sectors": [20_000, 21_000, 20_000], "reaction": 240}
+assert c.post("/api/lap", json={**lap, "ms": 5_000, "sectors": None}).status_code == 422  # scroll-to-end
+assert c.post("/api/lap", json={**lap, "initials": "D!"}).status_code == 422
+assert c.post("/api/lap", json={**lap, "sectors": [1, 2, 3]}).status_code == 422  # must add up
+assert c.post("/api/lap", json={**lap, "tyre": "slick"}).status_code == 422
+r = c.post("/api/lap", json=lap).json()
+assert r["position"] == 1 and r["total"] == 1
+assert c.post("/api/lap", json={**lap, "initials": "ABC", "ms": 50_000, "sectors": None}).json()["position"] == 1
+assert c.post("/api/lap", json={**lap, "initials": "XYZ"}).json()["position"] == 3  # tie: the earlier lap stays ahead
+top = c.get("/api/laps", params={"ms": 55_000}).json()
+assert [x["initials"] for x in top["laps"]] == ["ABC", "DLB", "XYZ"] and top["rank"] == 2 and top["total"] == 3
+assert top["laps"][1]["sectors"] == [20_000, 21_000, 20_000]
+for _ in range(7):
+    c.post("/api/lap", json=lap)
+assert c.post("/api/lap", json=lap).status_code == 429
+main.LAPS_DB.unlink()
 print("ok")
