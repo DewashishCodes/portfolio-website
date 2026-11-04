@@ -3,8 +3,8 @@ import { checkpointProgress, checkpoints } from '../lib/scrollMap'
 import { spline, wrap } from '../lib/trackSpline'
 import { scroller, useRace } from '../store/useRace'
 
-const W = 200
-const H = 140
+const W = 168
+const H = 118
 const PAD = 10
 
 function useProjector() {
