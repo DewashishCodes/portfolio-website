@@ -72,3 +72,13 @@ body {
     display: none;
   }
 }
+
+/* Chequered strip for the finish banner and the timer's FINISHED tag. */
+.chequer {
+  background: repeating-conic-gradient(#f2e8d5 0 25%, #151515 0 50%) 0 0 / 10px 10px;
+}
+
+/* Input is locked while the start lights run. */
+html.lenis-stopped {
+  overflow: hidden;
+}
