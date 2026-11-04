@@ -5,6 +5,7 @@ import content from '../content/content.json'
 import { useRace } from '../store/useRace'
 import { outsideSign, place, TRACK_LENGTH, ROAD_WIDTH } from '../lib/trackSpline'
 import { FINISH_T, START_T } from '../lib/scrollMap'
+import { ZONES } from '../lib/drs'
 import { useLive } from '../lib/live'
 import { rng } from './Environment'
 
@@ -420,6 +421,53 @@ function PitBox({ t }) {
   )
 }
 
+// DRS zone: detection line across the road, a white "DRS" board on both sides where it opens, and an end line.
+function drsTexture(text) {
+  const c = document.createElement('canvas')
+  c.width = 256
+  c.height = 160
+  const g = c.getContext('2d')
+  g.fillStyle = '#f4f4f0'
+  g.fillRect(0, 0, 256, 160)
+  g.fillStyle = '#111'
+  g.font = 'bold 92px system-ui, sans-serif'
+  g.textAlign = 'center'
+  g.fillText(text, 128, 112, 236)
+  const t = new CanvasTexture(c)
+  t.colorSpace = SRGBColorSpace
+  return t
+}
+
+function DrsZone({ t0, t1 }) {
+  const open = useMemo(() => drsTexture('DRS'), [])
+  const lines = [t0 - m(15), t1] // detection line, then the end of the zone
+  return (
+    <>
+      {lines.map((t, i) => {
+        const { position, rotY } = place(t, 0)
+        return (
+          <mesh key={i} position={[position[0], 0.027, position[2]]} rotation={[-Math.PI / 2, 0, rotY]}>
+            <planeGeometry args={[ROAD_WIDTH, i ? 0.25 : 0.45]} />
+            <meshStandardMaterial color={i ? '#d8d8d4' : '#f4f4f0'} />
+          </mesh>
+        )
+      })}
+      {[-1, 1].map((side) => {
+        const { position, rotY } = place(t0 - m(15), side * (ROAD_WIDTH / 2 + 3))
+        return (
+          <group key={side} position={position} rotation-y={rotY + Math.PI}>
+            <Box args={[0.12, 1.4, 0.12]} position={[0, 0.7, 0.02]} color="#888" />
+            <mesh position={[0, 1.9, 0]}>
+              <planeGeometry args={[1.6, 1]} />
+              <meshBasicMaterial map={open} toneMapped={false} />
+            </mesh>
+          </group>
+        )
+      })}
+    </>
+  )
+}
+
 // Fan zone: the social handles as trackside boards, angled toward the oncoming car.
 function socialTexture({ platform, handle, followers, showFollowers }) {
   const c = document.createElement('canvas')
@@ -489,6 +537,7 @@ export default function SetPieces() {
       <SocialBoards t={cpT.fanzone} />
       <Piece t={cpT.paddock + m(60)} lateral={28}><Motorhomes /></Piece>
       <Gantry t={FINISH_T} kind="finish" />
+      {ZONES.map(([a, b]) => <DrsZone key={a} t0={a} t1={b} />)}
     </>
   )
 }
