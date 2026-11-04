@@ -1,5 +1,5 @@
 {
-  "_readme": "Single source of truth for the DL Grand Prix portfolio. Every field marked TODO still needs Dewashish's input; the site must render without them (hide empty fields).",
+  "_readme": "Single source of truth for the portfolio. Empty fields are hidden. {Name} in intro.lead becomes a project chip.",
   "profile": {
     "name": "Dewashish Lambore",
     "headline": "Founder of Yap · AI & backend engineer · I build products people actually use",
@@ -25,71 +25,82 @@
         "since": "Jul 2025"
       }
     ],
-    "featuredProduct": {
-      "name": "Yap",
-      "tagline": "Voice typing for Android, built for how India talks. Now in a pilot run.",
-      "description": "Speak in Hinglish, English, Hindi or Marathi and Yap types clean, ready-to-send text in any app, even turning Hinglish into polished English.",
-      "features": [
-        "Floating dictation bubble",
-        "AI cleanup",
-        "Voice editing",
-        "Read-aloud",
-        "Cloudflare Workers backend"
-      ],
-      "status": "Pilot run",
-      "links": {
-        "website": "https://yap.pages.dev",
-        "instagram": "https://instagram.com/yap.voice",
-        "github": "https://github.com/yap-voice"
-      }
-    },
     "resumeUrl": "/resume.pdf",
-    "avatar": "/mascot/kurta/head-smile.webp"
+    "avatar": "/mascot/kurta/head-smile.webp",
+    "role": "AI & backend engineer",
+    "greetings": [
+      "Hello",
+      "नमस्ते",
+      "नमस्कार"
+    ],
+    "timezone": "IST, UTC+5:30"
   },
-  "livery": {
-    "name": "Rosso & Saffron",
-    "number": "07",
-    "colors": {
-      "body": "#C4161C",
-      "accent": "#E86A1F",
-      "cream": "#F2E8D5",
-      "detail": "#C8312B",
-      "carbon": "#151515"
-    },
-    "note": "The car keeps its own red paint (Ferrari SF90 model, logos removed). Accent = saffron details, cream = car number, carbon = floor and wings. Never show Ferrari or sponsor logos."
-  },
-  "checkpoints": [
-    {
-      "id": "grid",
-      "type": "profile",
-      "layout": "profile",
-      "board": { "big": "#07", "small": "DL GRAND PRIX" },
-      "trackT": 0.02,
-      "camera": "chase",
-      "label": "GRID",
-      "title": "Dewashish Lambore",
-      "mascot": {
-        "outfit": "kurta",
-        "expression": "smile",
-        "fullBody": "/mascot/kurta/chibi-celebrate.webp",
-        "line": "Radio check. I'm Dewashish, founder of Yap. One lap, and I'll show you everything I build."
-      }
-    },
-    {
-      "id": "t1",
-      "type": "project",
-      "layout": "media",
-      "panelSide": "right",
-      "trackT": 0.1,
-      "camera": { "shot": "trackside", "ahead": -18, "lateral": 10 },
-      "label": "T1",
-      "title": "Agent Office",
-      "pitch": "A dev team of Claude Code agents you run from your phone. You give the order; they plan, build, review and test it as pull requests; you tap merge.",
-      "bullets": [
-        "Problem: coding agents need constant babysitting, and you can't supervise them away from your desk.",
-        "Built: an Orchestrator splits orders into tasks; specialist agents work in parallel in their own git worktrees, and a Reviewer and QA agent check every PR before it reaches you.",
-        "Result: a phone-installable PWA with push notifications that approve plans and merge PRs, plus per-agent budgets, deny rules and a kill switch."
+  "intro": {
+    "lead": "I build AI products and the backends behind them. I'm building {Yap}, voice typing for Android in the languages India actually speaks, and I make tools for people who work with AI agents: {Agent Office}, {Dolphin} and {Tokenmeter}.",
+    "how": [
+      "Mostly ",
+      [
+        "python",
+        "Python"
       ],
+      " and ",
+      [
+        "fastapi",
+        "FastAPI"
+      ],
+      " on the backend, ",
+      [
+        "typescript",
+        "TypeScript"
+      ],
+      " on the front, agents built with ",
+      [
+        "claude",
+        "Claude Code"
+      ],
+      " and ",
+      [
+        "langchain",
+        "LangGraph"
+      ],
+      ", shipped on ",
+      [
+        "cloudflareworkers",
+        "Cloudflare Workers"
+      ],
+      " and ",
+      [
+        "docker",
+        "Docker"
+      ],
+      "."
+    ]
+  },
+  "projects": [
+    {
+      "title": "Yap",
+      "short": "Yap",
+      "color": "#e86a1f",
+      "status": "Pilot run",
+      "live": true,
+      "pitch": "Speak in Hinglish, English, Hindi or Marathi and Yap types clean, ready-to-send text in any app, even turning Hinglish into polished English.",
+      "website": "https://yap.pages.dev",
+      "github": "https://github.com/yap-voice",
+      "media": "",
+      "metric": "",
+      "tags": []
+    },
+    {
+      "title": "Agent Office",
+      "short": "Agent Office",
+      "color": "#4f46e5",
+      "status": "Open source",
+      "live": false,
+      "pitch": "A dev team of Claude Code agents you run from your phone. You give the order; they plan, build, review and test it as pull requests; you tap merge.",
+      "website": "",
+      "github": "https://github.com/DewashishCodes/agent-office",
+      "media": "/media/agent-office.webp",
+      "metric": "",
       "tags": [
         "Node.js",
         "Claude Code",
@@ -97,34 +108,19 @@
         "Git worktrees",
         "PWA",
         "SQLite"
-      ],
-      "repo": "DewashishCodes/agent-office",
-      "repoUrl": "https://github.com/DewashishCodes/agent-office",
-      "stars": 2,
-      "license": "AGPL-3.0",
-      "demoUrl": "",
-      "media": "/media/agent-office.webp",
-      "mascot": {
-        "outfit": "casual",
-        "expression": "smirk",
-        "line": "Turn one. Agent Office: my dev team lives on my phone. I just tap merge."
-      }
+      ]
     },
     {
-      "id": "t2",
-      "type": "project",
-      "layout": "media",
-      "panelSide": "left",
-      "trackT": 0.17,
-      "camera": "cockpit",
-      "label": "T2",
       "title": "Dolphin",
+      "short": "Dolphin",
+      "color": "#0284c7",
+      "status": "Open source",
+      "live": false,
       "pitch": "Open-source persistent memory for LLM apps and AI agents: vector search plus a knowledge graph.",
-      "bullets": [
-        "Problem: LLM apps and agent sessions forget everything between conversations.",
-        "Built: a Python SDK (add, search, get_context) and an MCP server + Claude Code plugin; an LLM extracts subject-relationship-object triples into a graph, and recall walks one hop out so related facts surface even with no shared words.",
-        "Result: runs fully local (SQLite, ONNX embeddings, Ollama), published on PyPI as dolphin-memory; my most-starred repo."
-      ],
+      "website": "",
+      "github": "https://github.com/DewashishCodes/dolphin",
+      "media": "/media/dolphin.webp",
+      "metric": "14 stars on GitHub",
       "tags": [
         "Python",
         "Knowledge graph",
@@ -132,68 +128,38 @@
         "MCP",
         "SQLite",
         "Ollama"
-      ],
-      "repo": "DewashishCodes/dolphin",
-      "repoUrl": "https://github.com/DewashishCodes/dolphin",
-      "stars": 14,
-      "license": "",
-      "demoUrl": "",
-      "media": "/media/dolphin.webp",
-      "mascot": {
-        "outfit": "casual",
-        "expression": "happy",
-        "line": "Turn two. Dolphin gives AI a memory. Your next session already knows what the last one decided."
-      }
+      ]
     },
     {
-      "id": "t3",
-      "type": "project",
-      "layout": "media",
-      "panelSide": "right",
-      "trackT": 0.24,
-      "camera": "chase",
-      "label": "T3",
       "title": "Tokenmeter",
+      "short": "Tokenmeter",
+      "color": "#059669",
+      "status": "Open source",
+      "live": false,
       "pitch": "A local-first Windows dashboard for Claude Code usage: tokens, costs, cache savings and activity, fully offline.",
-      "bullets": [
-        "Problem: heavy Claude Code users can't see where their tokens and money go.",
-        "Built: an Electron app that reads local session files and shows cost, cache savings, a 30-day projection, a 90-day heatmap, peak hours and per-project sparklines.",
-        "Result: zero telemetry, no API keys, a system-tray counter and a pixel companion; shipped as installer and portable builds."
-      ],
+      "website": "https://github.com/DewashishCodes/tokenmeter/releases/latest",
+      "github": "https://github.com/DewashishCodes/tokenmeter",
+      "media": "/media/tokenmeter.webp",
+      "metric": "11 stars on GitHub",
       "tags": [
         "JavaScript",
         "Electron",
         "Windows",
         "Data viz",
         "Local-first"
-      ],
-      "repo": "DewashishCodes/tokenmeter",
-      "repoUrl": "https://github.com/DewashishCodes/tokenmeter",
-      "stars": 11,
-      "license": "MIT",
-      "demoUrl": "https://github.com/DewashishCodes/tokenmeter/releases/latest",
-      "media": "/media/tokenmeter.webp",
-      "mascot": {
-        "outfit": "casual",
-        "expression": "thinking",
-        "line": "Turn three. Tokenmeter: telemetry for your AI spend. Fitting, on a race track."
-      }
+      ]
     },
     {
-      "id": "t4",
-      "type": "project",
-      "layout": "media",
-      "panelSide": "left",
-      "trackT": 0.31,
-      "camera": "onboard-rear",
-      "label": "T4",
       "title": "Janus",
+      "short": "Janus",
+      "color": "#7c3aed",
+      "status": "Open source",
+      "live": false,
       "pitch": "An AI revenue-recovery agent for failed payments, broken mandates and overdue B2B invoices. Razorpay Buildathon, Track 03.",
-      "bullets": [
-        "Problem: revenue leaks through failed debits, revoked mandates and late invoices, each handled reactively with no record of what was tried.",
-        "Built: one agent that detects, diagnoses the root cause, picks a bounded action on an escalating channel ladder (nudge, SMS/email, voice, human) and reports ₹ at risk vs ₹ recovered.",
-        "Result: guardrails written as tested code, not prompts, that can override the LLM; a full replayable audit trail and a live recovery dashboard."
-      ],
+      "website": "",
+      "github": "https://github.com/DewashishCodes/Janus",
+      "media": "/media/janus.webp",
+      "metric": "Razorpay Buildathon · Track 03",
       "tags": [
         "Python",
         "FastAPI",
@@ -201,187 +167,28 @@
         "Postgres",
         "Next.js",
         "Guardrails"
-      ],
-      "repo": "DewashishCodes/Janus",
-      "repoUrl": "https://github.com/DewashishCodes/Janus",
-      "stars": 0,
-      "license": "",
-      "demoUrl": "",
-      "media": "/media/janus.webp",
-      "mascot": {
-        "outfit": "casual",
-        "expression": "serious",
-        "line": "Turn four. Janus chases failed payments, and the guardrails can overrule the AI."
-      }
+      ]
     },
     {
-      "id": "t5",
-      "type": "project",
-      "layout": "media",
-      "panelSide": "right",
-      "trackT": 0.38,
-      "camera": { "shot": "trackside", "ahead": 14, "lateral": 9, "side": -1, "height": 1.1 },
-      "label": "T5",
       "title": "Multimodal RAG · HackRx 6.0",
+      "short": "HackRx RAG",
+      "color": "#e11d48",
+      "status": "Open source",
+      "live": false,
       "pitch": "Answers questions over 800+ page documents in under 18 seconds. Top 180 of 46,178 participants.",
-      "bullets": [
-        "Problem: answer insurance and policy questions accurately from huge, messy documents under a strict time limit.",
-        "Built: a FastAPI retrieval pipeline with local models and Gemini 1.5 Flash, crash-proof parsing and multi-key rate-limit handling.",
-        "Result: about 90% accuracy, sub-30s responses (under 18 s on 800+ pages), Top 180 of 46,178 at Bajaj Finserv HackRx 6.0, built as a third-semester team."
-      ],
+      "website": "",
+      "github": "https://github.com/DewashishCodes/HackrX6.0_Claud9",
+      "media": "/media/hackrx-rag.webp",
+      "metric": "Top 180 of 46,178 participants",
       "tags": [
         "Python",
         "FastAPI",
         "RAG",
         "Gemini",
         "Document parsing"
-      ],
-      "repo": "DewashishCodes/HackrX6.0_Claud9",
-      "repoUrl": "https://github.com/DewashishCodes/HackrX6.0_Claud9",
-      "stars": 1,
-      "license": "",
-      "demoUrl": "",
-      "media": "/media/hackrx-rag.webp",
-      "mascot": {
-        "outfit": "casual",
-        "expression": "laugh",
-        "line": "Turn five. 800 pages, under 18 seconds. Top 180 out of 46 thousand."
-      }
-    },
-    {
-      "id": "podium",
-      "type": "highlights",
-      "layout": "podium",
-      "board": { "big": "P2", "small": "OUT OF 600+ TEAMS" },
-      "trackT": 0.45,
-      "camera": { "shot": "heli", "ahead": 24, "radius": 28, "height": 9, "angle": 3.75 },
-      "label": "PODIUM",
-      "title": "Highlights",
-      "mascot": {
-        "outfit": "suit",
-        "expression": "laugh",
-        "fullBody": "/mascot/suit/chibi-celebrate.webp",
-        "line": "P2 out of 600-plus teams. Not bad, right?"
-      }
-    },
-    {
-      "id": "telemetry",
-      "type": "github",
-      "layout": "telemetry",
-      "board": { "big": "SHIP DAILY", "small": "GITHUB \u00b7 DEWASHISHCODES" },
-      "trackT": 0.52,
-      "camera": { "shot": "trackside", "ahead": -12, "lateral": 11, "side": -1, "height": 2 },
-      "label": "TELEMETRY",
-      "title": "GitHub telemetry",
-      "mascot": {
-        "outfit": "casual",
-        "expression": "serious",
-        "line": "Check the data. I ship most days."
-      }
-    },
-    {
-      "id": "pitstop",
-      "type": "stack",
-      "layout": "pitstop",
-      "board": { "big": "BOX BOX", "small": "PIT STOP \u00b7 TECH STACK" },
-      "stop": true,
-      "trackT": 0.6,
-      "camera": { "shot": "heli", "ahead": 6, "radius": 24, "height": 9, "angle": 2.3 },
-      "label": "PIT STOP",
-      "title": "Tech stack + agentic stack",
-      "mascot": {
-        "outfit": "casual",
-        "expression": "neutral",
-        "fullBody": "/mascot/casual/pose-sit-1.webp",
-        "line": "Box, box. Here's the kit I race with."
-      }
-    },
-    {
-      "id": "research",
-      "type": "research",
-      "layout": "research",
-      "board": { "big": "IEEE IES 2026", "small": "PUBLISHED RESEARCH" },
-      "trackT": 0.68,
-      "camera": "cockpit",
-      "label": "WIND TUNNEL",
-      "title": "Research",
-      "mascot": {
-        "outfit": "kurta",
-        "expression": "thinking",
-        "line": "Wind tunnel. My diffusion model generates synthetic EEG. Published at IEEE IES 2026."
-      }
-    },
-    {
-      "id": "fanzone",
-      "type": "socials",
-      "layout": "social",
-      "board": { "big": "@DEWASHISH.AI", "small": "BUILD IN PUBLIC" },
-      "trackT": 0.76,
-      "camera": "chase",
-      "label": "FAN ZONE",
-      "title": "I build in public",
-      "mascot": {
-        "outfit": "casual",
-        "expression": "wink",
-        "fullBody": "/mascot/casual/pose-phone.webp",
-        "line": "I build in public. Come say hi."
-      }
-    },
-    {
-      "id": "paddock",
-      "type": "education",
-      "layout": "hq",
-      "board": { "big": "SIT PUNE", "small": "TEAM HQ" },
-      "trackT": 0.85,
-      "camera": { "shot": "trackside", "ahead": -20, "lateral": 10 },
-      "label": "PADDOCK",
-      "title": "Team HQ",
-      "mascot": {
-        "outfit": "suit",
-        "expression": "neutral",
-        "line": "Team HQ: SIT Pune, and the teams I've raced with."
-      }
-    },
-    {
-      "id": "finish",
-      "panelLabel": "POST-RACE INTERVIEW",
-      "type": "contact",
-      "layout": "contact",
-      "board": { "big": "THANKS FOR RACING", "small": "RADIO ME BELOW" },
-      "trackT": 0.97,
-      "camera": { "shot": "heli", "ahead": 30, "radius": 30, "height": 11, "angle": 3.6 },
-      "label": "FINISH",
-      "title": "Let's build something fast.",
-      "mascot": {
-        "outfit": "suit",
-        "expression": "happy",
-        "fullBody": "/mascot/suit/pose-front.webp",
-        "line": "Chequered flag! Want to race together? Radio me."
-      }
+      ]
     }
   ],
-  "ambientLines": {
-    "idle": {
-      "outfit": "casual",
-      "expression": "tired",
-      "image": "/mascot/casual/chibi-laptop.webp",
-      "line": "Still there? Scroll to keep the car moving."
-    },
-    "reverse": {
-      "outfit": "casual",
-      "expression": "confused",
-      "line": "Wrong way! …kidding, take your time."
-    },
-    "pitlane": {
-      "outfit": "suit",
-      "expression": "smile",
-      "line": "Pit lane it is. Everything, no driving required."
-    },
-    "loading": {
-      "image": "/mascot/casual/chibi-wave.webp",
-      "line": "Warming up the tyres…"
-    }
-  },
   "moreProjects": [
     {
       "title": "Takshashila",
@@ -620,30 +427,13 @@
     }
   ],
   "contact": {
-    "headline": "Let's build something fast.",
-    "subline": "Hiring for AI, agents or full-stack? Need a product shipped? Radio in.",
     "email": "dewashish.lambore@gmail.com",
-    "ctas": [
-      {
-        "label": "Hire me",
-        "intent": "recruiter"
-      },
-      {
-        "label": "Work with me",
-        "intent": "client"
-      }
-    ],
-    "links": [
-      "linkedin",
-      "github",
-      "x",
-      "resume"
-    ],
-    "credit": "Built with Emergent · prompted with Wispr Flow"
+    "headline": "Let's work together.",
+    "subline": "Open to AI, agents and full-stack roles, and to building products with you."
   },
   "seo": {
-    "title": "Dewashish Lambore · DL Grand Prix",
-    "description": "Founder of Yap and AI engineer building agents, memory systems and products people use. Take a lap through my work.",
+    "title": "Dewashish Lambore · AI & backend engineer",
+    "description": "Founder of Yap and AI engineer building agents, memory systems and products people use.",
     "ogImage": "/og.png",
     "url": ""
   },
