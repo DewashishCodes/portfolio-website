@@ -179,7 +179,17 @@ RATE = 5  # messages per hour per IP
 
 
 def client_ip(request: Request) -> str:
-    # shortcut: client.host is the proxy's IP behind a reverse proxy; read the trusted X-Forwarded-For once deployed.
+    """The visitor's IP for rate limiting.
+
+    Behind N reverse proxies set TRUSTED_PROXY_HOPS=N. Each proxy appends the address it received the request
+    from, so the client is the Nth entry from the right of X-Forwarded-For. Entries further left are whatever
+    the client sent and can be forged, so they are never used. With 0 (the default, local dev) the header is ignored.
+    """
+    hops = int(os.environ.get("TRUSTED_PROXY_HOPS", "0") or 0)
+    if hops > 0:
+        chain = [p.strip() for p in request.headers.get("x-forwarded-for", "").split(",") if p.strip()]
+        if len(chain) >= hops:
+            return chain[-hops]
     return request.client.host if request.client else "unknown"
 
 
