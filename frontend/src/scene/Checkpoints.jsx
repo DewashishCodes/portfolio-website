@@ -3,24 +3,12 @@ import { CanvasTexture, SRGBColorSpace, Vector3 } from 'three'
 import { checkpoints } from '../lib/scrollMap'
 import { frameAt, turnAt, TRACK_LENGTH } from '../lib/trackSpline'
 
-const W = 1024
-const H = 576 // 16:9, matches the 1600x900 project media
+const W = 1600
+const H = 900 // 16:9, the project media at full resolution
 
-function wrapText(g, text, x, y, maxW, lineH) {
-  let line = ''
-  for (const w of text.split(' ')) {
-    if (line && g.measureText(line + w).width > maxW) {
-      g.fillText(line, x, y)
-      line = ''
-      y += lineH
-    }
-    line += w + ' '
-  }
-  g.fillText(line, x, y)
-}
-
-// Billboard face: project media with a title strip, or a big title card for other checkpoints.
-function billboardTexture({ label, title, media }) {
+// Billboard face. Projects: the screenshot itself, full bleed, no title (the panel has the title).
+// Everything else: the checkpoint's `board` line from content.json, a fact the panel does not lead with.
+function billboardTexture({ media, board, label }) {
   const c = document.createElement('canvas')
   c.width = W
   c.height = H
@@ -29,39 +17,30 @@ function billboardTexture({ label, title, media }) {
   tex.colorSpace = SRGBColorSpace
   tex.anisotropy = 8
 
-  const strip = () => {
-    g.fillStyle = 'rgba(20,20,22,0.92)'
-    g.fillRect(0, H - 120, W, 120)
-    g.fillStyle = '#E86A1F'
-    g.fillRect(0, H - 120, W, 8)
-    g.font = 'bold 40px system-ui, sans-serif'
-    g.fillText(label, 36, H - 52)
-    const x = 36 + g.measureText(label).width + 40
-    g.fillStyle = '#F2E8D5'
-    g.font = 'bold 52px system-ui, sans-serif'
-    g.fillText(title, x, H - 50, W - x - 36)
-    tex.needsUpdate = true
-  }
-
   g.fillStyle = '#141416'
   g.fillRect(0, 0, W, H)
   if (media) {
     const img = new Image()
     img.onload = () => {
       g.drawImage(img, 0, 0, W, H)
-      strip()
+      tex.needsUpdate = true
     }
     img.src = media
-    strip() // shown until the image arrives
   } else {
+    const { big = label, small = '' } = board ?? {}
+    g.fillStyle = '#C4161C'
+    g.fillRect(0, 0, W, 40)
     g.fillStyle = '#E86A1F'
-    g.fillRect(0, 0, W, 24)
-    g.font = 'bold 76px system-ui, sans-serif'
-    g.fillText(label, 56, 160)
+    g.fillRect(0, 40, W, 14)
+    g.textAlign = 'center'
     g.fillStyle = '#F2E8D5'
-    g.font = 'bold 96px system-ui, sans-serif'
-    wrapText(g, title, 56, 300, W - 112, 112)
+    g.font = 'bold 260px system-ui, sans-serif'
+    g.fillText(big, W / 2, H / 2 + 70, W - 120)
+    g.fillStyle = '#E86A1F'
+    g.font = 'bold 72px ui-monospace, monospace'
+    g.fillText(small, W / 2, H - 120, W - 120)
   }
+  tex.needsUpdate = true
   return tex
 }
 
