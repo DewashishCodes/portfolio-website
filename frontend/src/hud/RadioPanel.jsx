@@ -6,11 +6,14 @@ import { headSrc } from '../lib/mascot'
 import { useRace } from '../store/useRace'
 
 const IDLE_MS = 8000
+const CUE_MS = 4500 // how long a race event (start, finish) holds the radio
 const { idle, reverse } = content.ambientLines
 
-// Which radio message plays right now: reverse > idle > the last checkpoint reached.
+// Which radio message plays right now: race event > reverse > idle > the last checkpoint reached.
 function useMessage() {
   const active = useRace((s) => s.active)
+  const cue = useRace((s) => s.cue)
+  const [cueLive, setCueLive] = useState(false)
   const dir = useRace((s) => s.dir)
   const scrolledAt = useRace((s) => s.scrolledAt)
   const [last, setLast] = useState(0)
@@ -34,6 +37,15 @@ function useMessage() {
     return () => clearTimeout(id)
   }, [dir])
 
+  useEffect(() => {
+    const left = cue ? CUE_MS - (performance.now() - cue.at) : 0 // a remount (back from the Pit Lane) must not replay an old cue
+    if (left <= 0) return
+    setCueLive(true)
+    const id = setTimeout(() => setCueLive(false), left)
+    return () => clearTimeout(id)
+  }, [cue])
+
+  if (cueLive) return { key: `cue${cue.at}`, ...cue }
   if (reversing) return { key: 'reverse', ...reverse }
   if (isIdle) return { key: 'idle', ...idle, fullBody: idle.image }
   const cp = checkpoints[last]
