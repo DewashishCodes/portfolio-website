@@ -1,6 +1,9 @@
 import Lenis from 'lenis'
 import { useEffect } from 'react'
+import Confetti from './hud/Confetti'
 import Controls from './hud/Controls'
+import FinishBanner from './hud/FinishBanner'
+import Lights, { skipStart } from './hud/Lights'
 import Loader from './hud/Loader'
 import LapTimer from './hud/LapTimer'
 import Minimap from './hud/Minimap'
@@ -34,19 +37,34 @@ function jump(e) {
   if (i >= 0) lenis.scrollTo(stops[i] * lenis.limit)
 }
 
+const LERP = 0.1
+const FINISH_LERP = 0.035 // heavier scroll smoothing in the finish dwell: the car crosses the line in slow motion
+
 function Lap() {
+  const started = useRace((s) => s.start === 'go')
+
   useEffect(() => {
-    const lenis = new Lenis({ autoRaf: true, syncTouch: true })
+    history.scrollRestoration = 'manual' // a restored scroll would skip the grid and the start lights
+    const { goTo, start } = useRace.getState()
+    if (!goTo && start !== 'go') window.scrollTo(0, 0)
+    const lenis = new Lenis({ autoRaf: true, syncTouch: true, lerp: LERP })
     scroller.lenis = lenis
     if (import.meta.env.DEV) window.__lenis = lenis
     lenis.on('scroll', (e) =>
-      useRace.setState({ progress: e.progress, dir: e.direction || useRace.getState().dir, scrolledAt: performance.now(), ...(e.progress > 0.002 && { lightsOut: true }) }),
+      useRace.setState({ progress: e.progress, dir: e.direction || useRace.getState().dir, scrolledAt: performance.now() }),
     )
-    const { goTo } = useRace.getState()
-    if (goTo != null) requestAnimationFrame(() => lenis.scrollTo(checkpointProgress(goTo) * lenis.limit, { immediate: true }))
+    if (goTo || (goTo === 0 && start === 'go')) {
+      skipStart() // back from the Pit Lane mid-lap: drop straight in, no second start
+      requestAnimationFrame(() => lenis.scrollTo(checkpointProgress(goTo) * lenis.limit, { immediate: true }))
+    } else if (useRace.getState().start !== 'go') lenis.stop() // Lights.jsx starts it at lights out
+    const last = checkpoints.length - 1
+    const unsub = useRace.subscribe((s, prev) => {
+      if (s.active !== prev.active) lenis.options.lerp = s.active === last ? FINISH_LERP : LERP
+    })
     window.addEventListener('keydown', jump)
     return () => {
       window.removeEventListener('keydown', jump)
+      unsub()
       lenis.destroy()
       scroller.lenis = null
     }
@@ -63,12 +81,16 @@ function Lap() {
       <SpeedLines />
       {/* Tall spacer: native scroll is the throttle. */}
       <div style={{ height: `${(SCROLL_UNITS + 1) * 100}vh` }} />
-      <SectorLabel />
-      <LapTimer />
+      {/* Before lights out only the minimap and the nav show; the HUD arrives with the start. */}
+      {started && <SectorLabel />}
+      {started && <LapTimer />}
       <Minimap />
       <Controls />
-      <InfoPanel />
-      <RadioPanel />
+      {started && <InfoPanel />}
+      {started && <RadioPanel />}
+      <Lights />
+      <FinishBanner />
+      <Confetti />
       <Loader />
     </>
   )
