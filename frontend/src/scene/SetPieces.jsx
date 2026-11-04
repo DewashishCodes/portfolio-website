@@ -4,6 +4,7 @@ import { CanvasTexture, NearestFilter, PlaneGeometry, RepeatWrapping, SRGBColorS
 import content from '../content/content.json'
 import { useRace } from '../store/useRace'
 import { outsideSign, place, TRACK_LENGTH, ROAD_WIDTH } from '../lib/trackSpline'
+import { FINISH_T, START_T } from '../lib/scrollMap'
 import { rng } from './Environment'
 
 const m = (metres) => metres / TRACK_LENGTH
@@ -105,7 +106,7 @@ function SignBoard({ text, ...props }) {
 
 // Gantry spanning the road. kind = 'start' (five lights) or 'finish' (chequered banner).
 function Gantry({ t, kind }) {
-  const lightsOut = useRace((s) => s.lightsOut) // start lights glow until the first scroll
+  const lights = useRace((s) => s.lights) // mirrors the HUD lights during the start sequence
   const { position, rotY } = place(t, 0)
   const flag = useMemo(() => checker(24, 2), [])
   const line = useMemo(() => checker(16, 2), [])
@@ -114,10 +115,10 @@ function Gantry({ t, kind }) {
       {[-8, 8].map((x) => <Box key={x} args={[0.6, 8, 0.6]} position={[x, 4, 0]} color="#2a2a2d" />)}
       <Box args={[17, 1.4, 0.8]} position={[0, 7.6, 0]} color="#1c1c1f" />
       {kind === 'start'
-        ? [-3, -1.5, 0, 1.5, 3].map((x) => (
+        ? [-3, -1.5, 0, 1.5, 3].map((x, i) => (
             <mesh key={x} name="start-light" position={[x, 7.6, -0.45]}>
               <circleGeometry args={[0.45, 24]} />
-              <meshStandardMaterial color="#300" emissive="#ff1a1a" emissiveIntensity={lightsOut ? 0.15 : 6} side={2} />
+              <meshStandardMaterial color="#300" emissive="#ff1a1a" emissiveIntensity={i < lights ? 6 : 0.15} side={2} />
             </mesh>
           ))
         : (
@@ -313,7 +314,7 @@ function Motorhomes() {
 export default function SetPieces() {
   return (
     <>
-      <Gantry t={cpT.grid + m(55)} kind="start" />
+      <Gantry t={START_T} kind="start" />
       <GridSlots />
       <Piece t={cpT.grid + m(60)} lateral={22}><Grandstand /></Piece>
       <Piece t={cpT.podium + m(32)} lateral={26}><Podium /></Piece>
@@ -321,7 +322,7 @@ export default function SetPieces() {
       <Piece t={cpT.pitstop + m(36)} lateral={30}><PitBuilding /></Piece>
       <Piece t={cpT.fanzone + m(55)} lateral={22}><Grandstand rows={10} length={60} /></Piece>
       <Piece t={cpT.paddock + m(60)} lateral={28}><Motorhomes /></Piece>
-      <Gantry t={cpT.finish + m(55)} kind="finish" />
+      <Gantry t={FINISH_T} kind="finish" />
     </>
   )
 }
