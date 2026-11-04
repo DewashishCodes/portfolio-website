@@ -33,7 +33,8 @@
       "नमस्ते",
       "नमस्कार"
     ],
-    "timezone": "IST, UTC+5:30"
+    "timezone": "IST, UTC+5:30",
+    "motto": "From India, for the world."
   },
   "intro": {
     "lead": "I build AI products and the backends behind them. I'm building {Yap}, voice typing for Android in the languages India actually speaks, and I make tools for people who work with AI agents: {Agent Office}, {Dolphin} and {Tokenmeter}.",
@@ -173,7 +174,7 @@
       "website": "",
       "github": "https://github.com/DewashishCodes/dolphin",
       "media": "/media/dolphin.webp",
-      "metric": "14 stars on GitHub",
+      "metric": "",
       "tags": [
         "Python",
         "Knowledge graph",
@@ -214,7 +215,7 @@
       "website": "https://github.com/DewashishCodes/tokenmeter/releases/latest",
       "github": "https://github.com/DewashishCodes/tokenmeter",
       "media": "/media/tokenmeter.webp",
-      "metric": "11 stars on GitHub",
+      "metric": "",
       "tags": [
         "JavaScript",
         "Electron",
