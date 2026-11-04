@@ -4,7 +4,8 @@ import { useMemo, useRef } from 'react'
 import { Box3, CanvasTexture, Group, MathUtils, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, Quaternion, SRGBColorSpace, Vector3 } from 'three'
 import content from '../content/content.json'
 import { engine } from '../lib/audio'
-import { FINISH_T, mapProgress } from '../lib/scrollMap'
+import { checkpoints, FINISH_T, mapProgress } from '../lib/scrollMap'
+import { frameFor } from '../panels/layouts'
 import { frameAt, TRACK_LENGTH, turnAt } from '../lib/trackSpline'
 import { radio, useRace } from '../store/useRace'
 import { kerbAt, poseCamera, rig, shotFor, speedFov } from './rig'
@@ -210,8 +211,10 @@ export default function Car() {
     camera.rotateY(Math.sin(time * 17.3) * shake * 0.3)
 
     // Panel open on a wide screen: slide the frame so the subject sits in the space left of it.
-    const panel = active >= 0 && innerWidth >= 640 && camera.aspect >= 1 && st.shot.shot !== 'cockpit'
-    const frac = panel ? 218 / innerWidth : 0
+    // A left panel slides the frame the other way; a bottom strip leaves it centred.
+    const cp = checkpoints[active]
+    const panel = cp && lightsOut && innerWidth >= 640 && camera.aspect >= 1 && st.shot.shot !== 'cockpit' && frameFor(cp)
+    const frac = panel && panel.side !== 'bottom' ? ((panel.w + 16) / 2 / innerWidth) * (panel.side === 'left' ? -1 : 1) : 0
     const film = 70 * frac * Math.tan(MathUtils.degToRad(st.fov) * camera.aspect / 2)
     st.film = snap ? film : MathUtils.damp(st.film, film, 4, dt)
     if (Math.abs(camera.fov - st.fov) > 0.01 || Math.abs(camera.filmOffset - st.film) > 0.001) {
@@ -227,7 +230,8 @@ export default function Car() {
     }
 
     const scrolling = lightsOut && performance.now() - scrolledAt < 1200
-    const readout = scrolling ? Math.max(READOUT_FLOOR, speed) : speed > 1 ? speed : 0
+    const parked = checkpoints[active]?.stop // the pit box: really stationary, so the readout may show 0
+    const readout = scrolling && !parked ? Math.max(READOUT_FLOOR, speed) : speed > 1 ? speed : 0
     const next = { t: st.t, speed: readout }
     if (lightsOutAt && !finishedAt) next.lapMs = lapMs + realDt * 1000
     if (!finishedAt && lightsOut && st.t >= FINISH_T) {
