@@ -1,5 +1,25 @@
 import { create } from 'zustand'
 import { forcePit, manualTier, maxTier } from '../lib/quality'
+import { DWELLS, setDwell } from '../lib/scrollMap'
+
+// 19:00 to 06:00 local time races under floodlights.
+function isNight() {
+  const q = new URLSearchParams(location.search).get('time')
+  if (q === 'night' || q === 'day') return q === 'night'
+  const h = new Date().getHours()
+  return h >= 19 || h < 6
+}
+
+const TYRE_KEY = 'dl-gp-tyre'
+const savedTyre = (() => {
+  try {
+    const t = localStorage.getItem(TYRE_KEY)
+    return DWELLS[t] ? t : 'medium'
+  } catch {
+    return 'medium'
+  }
+})()
+setDwell(DWELLS[savedTyre])
 
 // progress: scroll 0..1. t: damped track position. speed: km/h. active: checkpoint index or -1.
 export const useRace = create(() => ({
@@ -29,11 +49,30 @@ export const useRace = create(() => ({
   invalid: false, // skipped a checkpoint: the lap cannot go on the leaderboard
   cue: null, // transient radio line { line, outfit, expression, at }, wins over the checkpoint line
   confetti: 0, // bump to fire a confetti burst
+  tyre: savedTyre, // soft | medium | hard: dwell length per checkpoint, picked on the grid
+  drsZone: false, // car is inside a DRS zone
+  drs: false, // DRS open: scroll counts double
+  boards: 0, // hidden pit boards found (seeded from localStorage by lib/achievements)
+  achievements: 0,
+  night: isNight(), // floodlit night race: the visitor's local evening and night, or ?time=night / ?time=day
   goTo: null, // checkpoint to jump to when the lap view mounts
 }))
 
 export function radio(line, outfit = 'casual', expression = 'happy') {
   useRace.setState({ cue: { line, outfit, expression, at: performance.now() } })
+}
+
+// Tyre choice: a reading-speed selector dressed as race strategy. Grid only, before lights out.
+export function chooseTyre(tyre) {
+  if (!DWELLS[tyre] || useRace.getState().start !== 'grid') return
+  setDwell(DWELLS[tyre])
+  useRace.setState({ tyre })
+  try {
+    localStorage.setItem(TYRE_KEY, tyre)
+  } catch {
+    // not remembered; fine
+  }
+  requestAnimationFrame(() => scroller.lenis?.resize()) // after React has resized the scroll spacer
 }
 
 // Lenis instance, set once in App; minimap and keyboard use it to jump.
