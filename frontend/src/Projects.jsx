@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { AppIcon, Ext, Icons, Status } from './ui'
+import { AppIcon, Ext, Icons, Link, Status } from './ui'
 
 export function ViewToggle({ view, setView }) {
   return (
@@ -26,12 +26,13 @@ function Row({ p }) {
   return (
     <li className="row isolate border-b border-line py-[22px]">
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-        <span className="row-title flex items-center gap-2.5">
+        {/* The title link stretches over the whole row; the external links sit above it. */}
+        <Link to={`/projects/${p.slug}`} className="row-title flex items-center gap-2.5 after:absolute after:inset-0 after:content-['']">
           <AppIcon p={p} />
           <h3 className="h3">{p.title}</h3>
-        </span>
+        </Link>
         <Status p={p} />
-        <div className="ml-auto flex gap-4 text-[13.5px] text-muted">
+        <div className="relative z-10 ml-auto flex gap-4 text-[13.5px] text-muted">
           {p.website && <Ext href={p.website} className="transition-colors hover:text-ink">Website</Ext>}
           {p.github && <Ext href={p.github} className="transition-colors hover:text-ink">GitHub</Ext>}
         </div>
@@ -43,10 +44,9 @@ function Row({ p }) {
 }
 
 function Card({ p }) {
-  const href = p.website || p.github
   return (
     <li>
-      <a href={href} target="_blank" rel="noreferrer" className="lift group block overflow-hidden rounded-[10px] border border-line bg-chip" tabIndex={-1} aria-hidden="true">
+      <Link to={`/projects/${p.slug}`} className="lift group block overflow-hidden rounded-[10px] border border-line bg-chip" tabIndex={-1} aria-hidden="true">
         {p.media ? (
           <img src={p.media} alt="" loading="lazy" className="aspect-[332/208] w-full object-cover object-top transition-transform duration-500 ease-out group-hover:scale-[1.02]" />
         ) : (
@@ -54,10 +54,10 @@ function Card({ p }) {
             <AppIcon p={p} size={56} />
           </div>
         )}
-      </a>
+      </Link>
       <div className="mt-4 flex items-center gap-2.5">
         <AppIcon p={p} />
-        <h3 className="h3">{p.title}</h3>
+        <Link to={`/projects/${p.slug}`} className="h3 hover:underline hover:underline-offset-4">{p.title}</Link>
         <div className="ml-auto flex gap-3 text-muted">
           {p.website && <a href={p.website} target="_blank" rel="noreferrer" aria-label={`${p.title} website`} className="pop hover:text-ink">{Icons.globe}</a>}
           {p.github && <a href={p.github} target="_blank" rel="noreferrer" aria-label={`${p.title} on GitHub`} className="pop hover:text-ink">{Icons.github}</a>}
