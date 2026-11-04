@@ -1,5 +1,6 @@
 """Self-check: .venv/Scripts/python test_main.py"""
 import json
+import os
 from datetime import date
 
 import main
@@ -51,4 +52,17 @@ for _ in range(7):
     c.post("/api/lap", json=lap)
 assert c.post("/api/lap", json=lap).status_code == 429
 main.LAPS_DB.unlink()
+
+# Client IP: X-Forwarded-For only counts behind trusted proxies, and only the hop the proxy wrote.
+class Req:
+    def __init__(self, xff):
+        self.headers = {"x-forwarded-for": xff} if xff else {}
+        self.client = type("C", (), {"host": "10.0.0.1"})()
+
+os.environ.pop("TRUSTED_PROXY_HOPS", None)
+assert main.client_ip(Req("1.2.3.4")) == "10.0.0.1"  # no trusted proxy: header ignored
+os.environ["TRUSTED_PROXY_HOPS"] = "1"
+assert main.client_ip(Req("6.6.6.6, 1.2.3.4")) == "1.2.3.4"  # forged left entry ignored
+assert main.client_ip(Req("")) == "10.0.0.1"
+os.environ.pop("TRUSTED_PROXY_HOPS")
 print("ok")
