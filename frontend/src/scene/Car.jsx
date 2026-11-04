@@ -4,6 +4,7 @@ import { useMemo, useRef } from 'react'
 import { Box3, CanvasTexture, Group, MathUtils, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, Quaternion, SRGBColorSpace, Vector3 } from 'three'
 import content from '../content/content.json'
 import { engine } from '../lib/audio'
+import { completeSector, SECTORS } from '../lib/lap'
 import { checkpoints, FINISH_T, mapProgress } from '../lib/scrollMap'
 import { frameFor } from '../panels/layouts'
 import { frameAt, TRACK_LENGTH, turnAt } from '../lib/trackSpline'
@@ -147,7 +148,7 @@ export default function Car() {
     const realDt = dt < 1 ? dt : 0 // the lap clock uses real time; a long gap means the tab was hidden, so it pauses
     dt = Math.min(dt, 0.05)
     const time = state.clock.elapsedTime
-    const { progress, active, lapMs, lightsOut, lightsOutAt, finishedAt, scrolledAt } = useRace.getState()
+    const { progress, active, lapMs, lightsOut, lightsOutAt, finishedAt, scrolledAt, sectors } = useRace.getState()
     const target = mapProgress(progress).t
     const prev = st.t ?? target
     st.t = MathUtils.damp(prev, target, 4, dt)
@@ -233,7 +234,12 @@ export default function Car() {
     const parked = checkpoints[active]?.stop // the pit box: really stationary, so the readout may show 0
     const readout = scrolling && !parked ? Math.max(READOUT_FLOOR, speed) : speed > 1 ? speed : 0
     const next = { t: st.t, speed: readout }
-    if (lightsOutAt && !finishedAt) next.lapMs = lapMs + realDt * 1000
+    if (lightsOutAt && !finishedAt) {
+      next.lapMs = lapMs + realDt * 1000
+      const k = sectors.length
+      if (k < SECTORS.length && st.t >= SECTORS[k]) completeSector(next.lapMs) // S1 / S2 line
+      else if (k === SECTORS.length && st.t >= FINISH_T) completeSector(next.lapMs) // S3 ends on the finish line
+    }
     if (!finishedAt && lightsOut && st.t >= FINISH_T) {
       next.finishedAt = performance.now()
       next.confetti = useRace.getState().confetti + 1
