@@ -3,4 +3,6 @@ dist/
 .env
 __pycache__/
 .venv/
-backend/data/
+backend/
+.wrangler/
+.dev.vars

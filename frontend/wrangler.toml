@@ -1,0 +1,8 @@
+name = "dewashish-portfolio"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "portfolio"
+database_id = "25635d87-e59a-4d81-89ae-018c6b657533"
