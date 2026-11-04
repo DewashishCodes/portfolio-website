@@ -119,10 +119,10 @@ const Bullets = ({ items }) => (
 
 // Media layout: the screenshot is the hero, the pitch is one line, and the bullets sit behind a Telemetry
 // toggle that swaps in for the image in the same box, so the panel never changes height.
-export function Project({ cp, flat }) {
+export function Project({ cp, flat, tyre }) {
   const live = useLive(REPOS_URL)?.[cp.repoUrl && repoKey(cp.repoUrl)]
   const stars = live?.stars ?? cp.stars
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(tyre === 'hard') // Hard tyres: the full read, bullets first
   const links = (
     <div className="mt-3 flex flex-wrap items-center gap-2">
       {cp.repoUrl && <Btn href={cp.repoUrl} primary>GitHub{stars > 0 && ` ★ ${stars}`}</Btn>}
