@@ -6,7 +6,7 @@ import {
   RGBADepthPacking, SRGBColorSpace, Vector3,
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
-import { spline } from '../lib/trackSpline'
+import { place, spline, turnAt } from '../lib/trackSpline'
 import { useRace } from '../store/useRace'
 import { rig } from './rig'
 import { usePBR } from './Track'
@@ -21,8 +21,22 @@ export const PALETTE = {
   fill: '#8FA8D8',
   grass: '#5B7A3A',
 }
+// Night race (visual_rehaul.md milestone 5): same geometry, a cold moon, floodlights. Horizon still equals fog.
+export const NIGHT = {
+  skyTop: '#03050c',
+  skyMid: '#0e1530',
+  fog: '#151b30',
+  sun: '#a9bcff', // the moon
+  fill: '#2b3a66',
+  grass: '#141c10',
+}
 export const FOG = PALETTE.fog
 export const SUN_DIR = new Vector3(-0.55, 0.27, 0.79).normalize() // ~15° elevation: long shadows
+const MOON_DIR = new Vector3(0.42, 0.62, -0.66).normalize()
+const LIGHTING = {
+  day: { P: PALETTE, dir: SUN_DIR, sun: 3.4, hemi: 1.25, ibl: 0.45, glow: 1, fogFar: 2300 },
+  night: { P: NIGHT, dir: MOON_DIR, sun: 0.55, hemi: 0.4, ibl: 0.08, glow: 0.35, fogFar: 1500 },
+}
 
 // Deterministic RNG so the scenery is the same on every load.
 export function rng(seed = 7) {
@@ -40,16 +54,25 @@ const center = trackPts.reduce((a, p) => a.add(p), new Vector3()).divideScalar(t
 const nearTrack = (x, z, d) => trackPts.some((p) => (p.x - x) ** 2 + (p.z - z) ** 2 < d * d)
 
 // Gradient dome with a sun disc and halo. Follows the camera; drawn first and never fogged.
-function SkyDome() {
+function SkyDome({ L }) {
   const ref = useRef()
   const camera = useThree((s) => s.camera)
   const uniforms = useMemo(() => ({
-    top: { value: new Color(PALETTE.skyTop) },
-    mid: { value: new Color(PALETTE.skyMid) },
-    horizon: { value: new Color(PALETTE.fog) },
-    sunCol: { value: new Color(PALETTE.sun) },
-    sunDir: { value: SUN_DIR },
+    top: { value: new Color() },
+    mid: { value: new Color() },
+    horizon: { value: new Color() },
+    sunCol: { value: new Color() },
+    sunDir: { value: new Vector3() },
+    glow: { value: 1 },
   }), [])
+  useLayoutEffect(() => {
+    uniforms.top.value.set(L.P.skyTop)
+    uniforms.mid.value.set(L.P.skyMid)
+    uniforms.horizon.value.set(L.P.fog)
+    uniforms.sunCol.value.set(L.P.sun)
+    uniforms.sunDir.value.copy(L.dir)
+    uniforms.glow.value = L.glow
+  }, [L, uniforms])
   useFrame(() => ref.current.position.copy(camera.position))
   return (
     <mesh ref={ref} renderOrder={-1} frustumCulled={false}>
@@ -57,14 +80,14 @@ function SkyDome() {
       <shaderMaterial side={BackSide} depthWrite={false} uniforms={uniforms}
         vertexShader={`varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`}
         fragmentShader={`
-          uniform vec3 top, mid, horizon, sunCol, sunDir; varying vec3 vDir;
+          uniform vec3 top, mid, horizon, sunCol, sunDir; uniform float glow; varying vec3 vDir;
           void main(){
             vec3 d = normalize(vDir);
             float h = d.y;
             vec3 c = mix(horizon, mid, smoothstep(0.0, 0.07, h));
             c = mix(c, top, smoothstep(0.05, 0.55, h));
             float s = max(dot(d, normalize(sunDir)), 0.0);
-            c += sunCol * (pow(s, 6.0) * 0.35 + pow(s, 48.0) * 0.6) * (1.0 - smoothstep(0.0, 0.6, h) * 0.5);
+            c += sunCol * glow * (pow(s, 6.0) * 0.35 + pow(s, 48.0) * 0.6) * (1.0 - smoothstep(0.0, 0.6, h) * 0.5);
             c += sunCol * smoothstep(0.9993, 0.9996, s) * 3.0; // disc, bright enough to bloom
             c = mix(c, horizon, 1.0 - smoothstep(-0.02, 0.012, h)); // below the horizon is all haze
             gl_FragColor = vec4(c, 1.0);
@@ -78,7 +101,7 @@ function SkyDome() {
 const SHADOW = { high: 2048, medium: 1024, low: 512 }
 
 // Low warm sun that follows the car, so the shadow map covers whatever the camera is framing.
-function Sun() {
+function Sun({ L }) {
   const light = useRef()
   const quality = useRace((s) => s.quality)
   useLayoutEffect(() => {
@@ -90,11 +113,11 @@ function Sun() {
   useFrame(() => {
     const l = light.current
     l.target.position.copy(rig.car.position)
-    l.position.copy(rig.car.position).addScaledVector(SUN_DIR, 120)
+    l.position.copy(rig.car.position).addScaledVector(L.dir, 120)
     l.target.updateMatrixWorld()
   })
   return (
-    <directionalLight ref={light} intensity={3.4} color={PALETTE.sun} castShadow
+    <directionalLight ref={light} intensity={L.sun} color={L.P.sun} castShadow
       shadow-bias={-0.0004} shadow-normalBias={0.03} shadow-radius={4}
       shadow-camera-left={-36} shadow-camera-right={36} shadow-camera-top={36} shadow-camera-bottom={-36}
       shadow-camera-near={1} shadow-camera-far={260} />
@@ -320,15 +343,65 @@ function Ground() {
   )
 }
 
+// Floodlight masts along the outside of the track (night only). The lamp heads are unlit white so they bloom;
+// the actual light on the car comes from one spot that follows it, which is far cheaper than a light per mast.
+const MAST_EVERY = 110 // metres
+function Floodlights() {
+  const spot = useRef()
+  const head = useRef()
+  const masts = useMemo(() => {
+    const out = []
+    const n = Math.floor(trackPts.length)
+    for (let d = 0; d < n; d += Math.round((MAST_EVERY / 3000) * n)) {
+      const t = d / n
+      const side = turnAt(t) > 0 ? 1 : -1
+      const { position, rotY } = place(t, side * 24)
+      out.push({ position, rotY: rotY + (side > 0 ? Math.PI / 2 : -Math.PI / 2) }) // lamp faces the road
+    }
+    return out
+  }, [])
+  useFrame(() => {
+    const c = rig.car
+    spot.current.position.set(c.position.x + 18, 34, c.position.z + 10)
+    spot.current.target.position.copy(c.position)
+    spot.current.target.updateMatrixWorld()
+    // Headlight: just ahead of the nose, aimed 30 m down the road.
+    head.current.position.set(0, 0.55, 2.2).applyMatrix4(c.matrixWorld)
+    head.current.target.position.set(0, 0, 30).applyMatrix4(c.matrixWorld)
+    head.current.target.updateMatrixWorld()
+  })
+  return (
+    <>
+      <spotLight ref={spot} color="#fff1d6" intensity={9} angle={0.55} penumbra={0.7} decay={0} distance={0} />
+      <spotLight ref={head} color="#eaf2ff" intensity={6} angle={0.42} penumbra={0.5} decay={0} distance={0} />
+      {masts.map((mst, i) => (
+        <group key={i} position={mst.position} rotation-y={mst.rotY}>
+          <mesh position={[0, 11, 0]}>
+            <cylinderGeometry args={[0.18, 0.25, 22, 6]} />
+            <meshStandardMaterial color="#3a3d44" />
+          </mesh>
+          <mesh position={[0, 22.4, 0.6]} rotation-x={0.5}>
+            <boxGeometry args={[3.2, 1.2, 0.3]} />
+            <meshBasicMaterial color="#fff6e0" toneMapped={false} />
+          </mesh>
+        </group>
+      ))}
+    </>
+  )
+}
+
 export default function Environment() {
+  const night = useRace((s) => s.night)
+  const L = LIGHTING[night ? 'night' : 'day']
   return (
     <>
       {/* HDRI for car reflections only; the sky you see is the gradient dome. */}
-      <IBL preset="sunset" environmentIntensity={0.45} />
-      <SkyDome />
-      <fog attach="fog" args={[PALETTE.fog, 160, 2300]} />
-      <hemisphereLight args={[PALETTE.fill, PALETTE.grass, 1.25]} />
-      <Sun />
+      <IBL preset={night ? 'night' : 'sunset'} environmentIntensity={L.ibl} />
+      <SkyDome L={L} />
+      <fog attach="fog" args={[L.P.fog, night ? 90 : 160, L.fogFar]} />
+      <hemisphereLight args={[L.P.fill, L.P.grass, L.hemi]} />
+      <Sun L={L} />
+      {night && <Floodlights />}
       <Ground />
       <Trees />
       <Hills />
