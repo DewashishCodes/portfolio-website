@@ -9,6 +9,7 @@ import NotFound from './pages/NotFound'
 import Project from './pages/Project'
 import Resume from './pages/Resume'
 import Work from './pages/Work'
+import Roadster from './Roadster'
 import { Icons, Link, scrollToTarget, toggleTheme, usePath } from './ui'
 
 const { profile, socials, seo } = content
@@ -160,6 +161,7 @@ export default function App() {
       </AnimatePresence>
       <Footer />
       <CommandMenu />
+      <Roadster />
     </div>
   )
 }
