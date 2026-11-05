@@ -49,7 +49,7 @@ function NowCard() {
       </p>
       <ul className="mt-3 grid gap-2.5 sm:grid-cols-3 sm:gap-4">
         {profile.now.map((n) => {
-          const p = byTitle[n.org]
+          const p = byTitle[n.org] || (n.icon && { icon: n.icon })
           return (
             <li key={n.org} className="flex items-center gap-3 rounded-[10px] border border-line bg-col px-3 py-2.5">
               {p ? <AppIcon p={p} size={28} /> : <span className="grid size-7 shrink-0 place-items-center rounded-[7px] bg-chip text-[13px] font-semibold text-ink">{n.org[0]}</span>}
@@ -61,6 +61,13 @@ function NowCard() {
           )
         })}
       </ul>
+      {profile.next && (
+        <p className="mt-3 flex items-center gap-2 border-t border-line pt-3 text-[14px] text-ink">
+          <span className="font-num text-[11px] tracking-[0.12em] text-muted uppercase">Next</span>
+          {profile.next.icon && <AppIcon p={profile.next} size={18} />}
+          <span><span className="font-medium">{profile.next.role}</span> at <span className="font-medium">{profile.next.org}</span><span className="text-muted"> · {profile.next.when}</span></span>
+        </p>
+      )}
     </div>
   )
 }

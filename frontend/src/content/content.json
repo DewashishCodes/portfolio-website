@@ -5,6 +5,7 @@
     "headline": "Founder of Yap · AI & backend engineer · I build products people actually use",
     "oneLiner": "I code to create value for the end-consumer. From India, for the world.",
     "location": "Pune, India",
+    "next": { "role": "Software Development Intern", "org": "BNY", "when": "Summer 2027", "icon": "/icons/bny.png" },
     "now": [
       {
         "role": "Founder",
@@ -15,13 +16,15 @@
       {
         "role": "Founding Engineer",
         "org": "Astrowithin",
-        "url": "",
+        "url": "https://astrowithin.me",
+        "icon": "/icons/astrowithin.png",
         "since": "May 2026"
       },
       {
         "role": "AI Research Intern",
         "org": "SCAAI – Symbiosis Centre for Applied AI",
         "url": "",
+        "icon": "/icons/symbiosis.webp",
         "since": "Jul 2025"
       }
     ],
@@ -326,6 +329,11 @@
   ],
   "moreProjects": [
     {
+      "title": "Flying Roadster Sim",
+      "pitch": "Fan-made browser sim of the flying Roadster reveal: cold-gas jets, 8 seconds of air, three stages.",
+      "url": "https://github.com/DewashishCodes/tesla-roadster-sim"
+    },
+    {
       "title": "Takshashila",
       "pitch": "Multi-agent Claude Code orchestration with persistent workspaces and memory.",
       "url": "https://github.com/DewashishCodes/takshashila"
@@ -568,6 +576,13 @@
     "url": ""
   },
   "experience": [
+    {
+      "role": "Incoming Software Development Intern",
+      "org": "BNY",
+      "dates": "Summer 2027",
+      "location": "",
+      "bullets": []
+    },
     {
       "role": "Founder",
       "org": "Yap",
