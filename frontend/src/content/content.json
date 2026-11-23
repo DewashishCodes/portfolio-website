@@ -5,7 +5,7 @@
     "headline": "Founder of Yap · AI & backend engineer · I build products people actually use",
     "oneLiner": "I code to create value for the end-consumer. From India, for the world.",
     "location": "Pune, India",
-    "next": { "role": "Software Development Intern", "org": "BNY", "when": "Summer 2027", "icon": "/icons/bny.png" },
+    "next": { "role": "Software Development Intern", "org": "BNY", "when": "Summer 2027" },
     "now": [
       {
         "role": "Founder",
